@@ -1,6 +1,8 @@
 Saugvinon
 =========
 
+![](https://github.com/nankeen/sauvignon/workflows/CI/badge.svg)
+
 Saugvinon is a tree walking interpreter written in Rust.
 
 ## TODO:
