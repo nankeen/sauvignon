@@ -39,7 +39,7 @@ impl<'a> Lexer<'a> {
         };
 
         lexer.read_char();
-        return lexer;
+        lexer
     }
 
     fn read_char(&mut self) {
@@ -49,13 +49,13 @@ impl<'a> Lexer<'a> {
     fn read_identifier(&mut self) -> String {
         let mut ident = String::new();
         while let Some(c) = self.cursor {
-            if !Lexer::is_identifier(&c) {
+            if !Lexer::is_identifier(c) {
                 break;
             }
             ident.push(c);
             self.read_char();
         }
-        return ident;
+        ident
     }
 
     fn read_number(&mut self) -> i64 {
@@ -79,8 +79,8 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    fn is_identifier(c: &char) -> bool {
-        c.is_alphabetic() || *c == '_'
+    fn is_identifier(c: char) -> bool {
+        c.is_alphabetic() || c == '_'
     }
 
     fn lookup_identifier(ident: &str) -> Token {
@@ -106,29 +106,29 @@ impl<'a> Iterator for Lexer<'a> {
             Some('+') => Some(Token::Plus),
             Some('{') => Some(Token::LBrace),
             Some('}') => Some(Token::RBrace),
-            Some(c) if Lexer::is_identifier(&c) => {
+            Some(c) if Lexer::is_identifier(c) => {
                 let ident = self.read_identifier();
                 return Some(Lexer::lookup_identifier(&ident));
-            },
+            }
             Some(c) if c.is_digit(10) => {
                 let literal = self.read_number();
                 return Some(Token::IntLiteral(literal));
-            },
+            }
             Some(_) => Some(Token::Illegal),
             None => Some(Token::EOF),
         };
 
         self.read_char();
-        return tok;
+        tok
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{Token, Lexer};
+    use super::{Lexer, Token};
 
     #[test]
-    fn test_next_token(){
+    fn test_next_token() {
         let input = "let five = 5;
         let ten = 10;
         let add = fn(x, y) {
@@ -162,14 +162,14 @@ mod tests {
             Token::Semicolon,
             Token::RBrace,
             Token::Semicolon,
-            Token::EOF
+            Token::EOF,
         ];
 
         let mut lexer = Lexer::new(input);
         for test in &tests {
             match lexer.next() {
                 Some(tok) => assert_eq!(*test, tok),
-                None => panic!("unexpected lexer error: returned None")
+                None => panic!("unexpected lexer error: returned None"),
             };
         }
     }
