@@ -1,5 +1,7 @@
 mod lexer;
+mod repl;
 
 fn main() {
-    println!("Hello, world!");
+    println!("Sauvignon REPL");
+    repl::start(std::io::stdin(), std::io::stdout());
 }
