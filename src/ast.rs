@@ -17,6 +17,11 @@ pub enum Expression {
         operator: Token,
         right: Box<Expression>,
     },
+    InfixExpression {
+        operator: Token,
+        left: Box<Expression>,
+        right: Box<Expression>,
+    },
     Empty,
 }
 
