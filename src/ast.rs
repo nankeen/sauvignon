@@ -6,7 +6,6 @@ pub enum Statement {
     LetStatement { ident: Token, expr: Expression },
     ReturnStatement(Expression),
     ExpressionStatement(Expression),
-    Empty,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -22,7 +21,6 @@ pub enum Expression {
         left: Box<Expression>,
         right: Box<Expression>,
     },
-    Empty,
 }
 
 pub type Program = BlockStatement;
