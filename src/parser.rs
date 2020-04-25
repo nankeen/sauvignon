@@ -4,6 +4,17 @@ use crate::lexer::{Lexer, Token};
 use std::iter::Peekable;
 use std::mem::discriminant;
 
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
+enum Precedence {
+    Lowest,
+    Equality,
+    Comparison,
+    Sum,
+    Product,
+    Prefix,
+    Call,
+}
+
 pub struct Parser<'a> {
     lexer: Peekable<Lexer<'a>>,
     cursor: Token,
@@ -39,7 +50,7 @@ impl<'a> Parser<'a> {
                 Ok(())
             }
             _ => Err(format!(
-                "unexpected token: expected {:?} got {:?} instead",
+                "expected {:?} got {:?} instead",
                 expect, self.cursor
             )),
         }
@@ -48,7 +59,35 @@ impl<'a> Parser<'a> {
     fn parse_statement(&mut self) -> Result<Statement, String> {
         match self.cursor {
             Token::Let => self.parse_let_statement(),
-            _ => Err("Invalid token".to_string()),
+            Token::Return => self.parse_return_statement(),
+            _ => self.parse_expression_statement(),
+        }
+    }
+
+    fn parse_return_statement(&mut self) -> Result<Statement, String> {
+        self.next_token();
+
+        // TODO: skipping expressions
+        while self.cursor != Token::Semicolon {
+            self.next_token();
+        }
+        Ok(Statement::ReturnStatement(Expression::Empty))
+    }
+
+    fn parse_expression_statement(&mut self) -> Result<Statement, String> {
+        let expr = self.parse_expression(Precedence::Lowest)?;
+
+        match self.lexer.peek() {
+            Some(Token::Semicolon) => self.next_token(),
+            _ => (),
+        };
+        Ok(Statement::ExpressionStatement(expr))
+    }
+
+    fn parse_expression(&mut self, _precedence: Precedence) -> Result<Expression, String> {
+        match self.cursor {
+            Token::Ident(_) => Ok(Expression::Ident(self.cursor.clone())),
+            _ => Err(format!("unexpected token {:?} in expression", self.cursor))
         }
     }
 
@@ -82,9 +121,9 @@ mod tests {
         let mut parser = Parser::new(lexer);
 
         let program = parser.parse_program()?;
-        println!("Program: {:?}", program);
         let mut statements = program.iter();
 
+        // TODO: Update test cases with proper expressions
         let tests = [
             Statement::LetStatement {
                 ident: Token::Ident("x".to_string()),
@@ -104,4 +143,54 @@ mod tests {
         }
         Ok(())
     }
+
+    #[test]
+    fn test_return_statements() -> Result<(), String> {
+        let input = "return 5;
+        return 10;
+        return 993322;";
+        let lexer = Lexer::new(input);
+        let mut parser = Parser::new(lexer);
+
+        let program = parser.parse_program()?;
+        let mut statements = program.iter();
+
+        // TODO: Update test cases with proper expressions
+        let tests = [
+            Statement::ReturnStatement(Expression::Empty),
+            Statement::ReturnStatement(Expression::Empty),
+        ];
+
+        for test in &tests {
+            match statements.next() {
+                Some(tok) => assert_eq!(*test, *tok),
+                None => panic!("unexpected parser error: returned None"),
+            };
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn test_identifier_expr() -> Result<(), String> {
+        let input = "foobar";
+        let lexer = Lexer::new(input);
+        let mut parser = Parser::new(lexer);
+
+        let program = parser.parse_program()?;
+        let mut statements = program.iter();
+
+        // TODO: Update test cases with proper expressions
+        let tests = [
+            Statement::ExpressionStatement(Expression::Ident(Token::Ident("foobar".to_string()))),
+        ];
+
+        for test in &tests {
+            match statements.next() {
+                Some(tok) => assert_eq!(*test, *tok),
+                None => panic!("unexpected parser error: returned None"),
+            };
+        }
+        Ok(())
+    }
 }
+
