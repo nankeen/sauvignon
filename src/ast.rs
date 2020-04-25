@@ -4,11 +4,15 @@ use crate::lexer::Token;
 #[derive(Debug, PartialEq, Clone)]
 pub enum Statement {
     LetStatement { ident: Token, expr: Expression },
+    ReturnStatement(Expression),
+    ExpressionStatement(Expression),
     Empty,
 }
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Expression {
+    Ident(Token),
+    IntLiteral(i64),
     Empty,
 }
 
