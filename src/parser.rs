@@ -83,10 +83,22 @@ impl<'a> Parser<'a> {
         Ok(Statement::ExpressionStatement(expr))
     }
 
+    fn parse_prefix_expr(&mut self) -> Result<Expression, String> {
+        let op = self.cursor.clone();
+        self.next_token();
+        let expr = self.parse_expression(Precedence::Prefix)?;
+        Ok(Expression::PrefixExpression {
+            operator: op,
+            right: Box::new(expr),
+        })
+    }
+
     fn parse_expression(&mut self, _precedence: Precedence) -> Result<Expression, String> {
         match self.cursor {
             Token::Ident(_) => Ok(Expression::Ident(self.cursor.clone())),
             Token::IntLiteral(i) => Ok(Expression::IntLiteral(i)),
+            Token::Bang => self.parse_prefix_expr(),
+            Token::Minus => self.parse_prefix_expr(),
             _ => Err(format!("unexpected token {:?} in expression", self.cursor)),
         }
     }
@@ -179,7 +191,6 @@ mod tests {
         let program = parser.parse_program()?;
         let mut statements = program.iter();
 
-        // TODO: Update test cases with proper expressions
         let tests = [Statement::ExpressionStatement(Expression::Ident(
             Token::Ident("foobar".to_string()),
         ))];
@@ -202,10 +213,38 @@ mod tests {
         let program = parser.parse_program()?;
         let mut statements = program.iter();
 
-        // TODO: Update test cases with proper expressions
         let tests = [
             Statement::ExpressionStatement(Expression::IntLiteral(5)),
             Statement::ExpressionStatement(Expression::IntLiteral(1024)),
+        ];
+
+        for test in &tests {
+            match statements.next() {
+                Some(tok) => assert_eq!(*test, *tok),
+                None => panic!("unexpected parser error: returned None"),
+            };
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn test_prefix_expr() -> Result<(), String> {
+        let input = "!5; -15;";
+        let lexer = Lexer::new(input);
+        let mut parser = Parser::new(lexer);
+
+        let program = parser.parse_program()?;
+        let mut statements = program.iter();
+
+        let tests = [
+            Statement::ExpressionStatement(Expression::PrefixExpression {
+                operator: Token::Bang,
+                right: Box::new(Expression::IntLiteral(5)),
+            }),
+            Statement::ExpressionStatement(Expression::PrefixExpression {
+                operator: Token::Minus,
+                right: Box::new(Expression::IntLiteral(15)),
+            }),
         ];
 
         for test in &tests {
