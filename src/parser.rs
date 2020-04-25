@@ -77,17 +77,17 @@ impl<'a> Parser<'a> {
     fn parse_expression_statement(&mut self) -> Result<Statement, String> {
         let expr = self.parse_expression(Precedence::Lowest)?;
 
-        match self.lexer.peek() {
-            Some(Token::Semicolon) => self.next_token(),
-            _ => (),
-        };
+        if let Some(Token::Semicolon) = self.lexer.peek() {
+            self.next_token();
+        }
         Ok(Statement::ExpressionStatement(expr))
     }
 
     fn parse_expression(&mut self, _precedence: Precedence) -> Result<Expression, String> {
         match self.cursor {
             Token::Ident(_) => Ok(Expression::Ident(self.cursor.clone())),
-            _ => Err(format!("unexpected token {:?} in expression", self.cursor))
+            Token::IntLiteral(i) => Ok(Expression::IntLiteral(i)),
+            _ => Err(format!("unexpected token {:?} in expression", self.cursor)),
         }
     }
 
@@ -180,8 +180,32 @@ mod tests {
         let mut statements = program.iter();
 
         // TODO: Update test cases with proper expressions
+        let tests = [Statement::ExpressionStatement(Expression::Ident(
+            Token::Ident("foobar".to_string()),
+        ))];
+
+        for test in &tests {
+            match statements.next() {
+                Some(tok) => assert_eq!(*test, *tok),
+                None => panic!("unexpected parser error: returned None"),
+            };
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn test_integer_expr() -> Result<(), String> {
+        let input = "5; 1024";
+        let lexer = Lexer::new(input);
+        let mut parser = Parser::new(lexer);
+
+        let program = parser.parse_program()?;
+        let mut statements = program.iter();
+
+        // TODO: Update test cases with proper expressions
         let tests = [
-            Statement::ExpressionStatement(Expression::Ident(Token::Ident("foobar".to_string()))),
+            Statement::ExpressionStatement(Expression::IntLiteral(5)),
+            Statement::ExpressionStatement(Expression::IntLiteral(1024)),
         ];
 
         for test in &tests {
@@ -193,4 +217,3 @@ mod tests {
         Ok(())
     }
 }
-
