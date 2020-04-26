@@ -12,6 +12,7 @@ pub enum Statement {
 pub enum Expression {
     Ident(Token),
     IntLiteral(i64),
+    BoolLiteral(bool),
     PrefixExpression {
         operator: Token,
         right: Box<Expression>,
