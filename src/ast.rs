@@ -22,6 +22,11 @@ pub enum Expression {
         left: Box<Expression>,
         right: Box<Expression>,
     },
+    IfExpression {
+        condition: Box<Expression>,
+        consequence: Box<BlockStatement>,
+        alternative: Option<Box<BlockStatement>>,
+    },
 }
 
 pub type Program = BlockStatement;

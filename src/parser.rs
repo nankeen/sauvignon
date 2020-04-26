@@ -49,10 +49,8 @@ impl<'a> Parser<'a> {
                 self.next_token();
                 Ok(())
             }
-            _ => Err(format!(
-                "expected {:?} got {:?} instead",
-                expect, self.cursor
-            )),
+            Some(tok) => Err(format!("expected {:?} got {:?} instead", expect, tok)),
+            _ => Err("unexpected parsing error".to_string()),
         }
     }
 
@@ -108,6 +106,7 @@ impl<'a> Parser<'a> {
             Token::Bang => self.parse_prefix_expr(),
             Token::Minus => self.parse_prefix_expr(),
             Token::LParen => self.parse_grouped_expr(),
+            Token::If => self.parse_if_expr(),
             _ => Err(format!("unexpected token {:?} in expression", self.cursor)),
         }?;
 
@@ -164,6 +163,39 @@ impl<'a> Parser<'a> {
             self.next_token();
         }
         Ok(Statement::LetStatement { ident, expr })
+    }
+
+    fn parse_if_expr(&mut self) -> Result<Expression, String> {
+        self.expect_token(Token::LParen)?;
+        self.next_token();
+        let condition = self.parse_expression(Precedence::Lowest)?;
+        self.expect_token(Token::RParen)?;
+        self.expect_token(Token::LBrace)?;
+        let consequence = self.parse_block_statement()?;
+        let alternative = match self.lexer.peek() {
+            Some(Token::Else) => {
+                self.next_token();
+                self.expect_token(Token::LBrace)?;
+                Some(Box::new(self.parse_block_statement()?))
+            }
+            _ => None,
+        };
+        Ok(Expression::IfExpression {
+            condition: Box::new(condition),
+            consequence: Box::new(consequence),
+            alternative,
+        })
+    }
+
+    fn parse_block_statement(&mut self) -> Result<BlockStatement, String> {
+        self.next_token();
+        let mut block = Vec::new();
+        while self.cursor != Token::RBrace && self.cursor != Token::EOF {
+            let statement = self.parse_statement()?;
+            block.push(statement);
+            self.next_token();
+        }
+        Ok(block)
     }
 }
 
@@ -439,6 +471,68 @@ mod tests {
                 right: Box::new(Expression::IntLiteral(4)),
             }),
         ];
+
+        for test in &tests {
+            match statements.next() {
+                Some(tok) => assert_eq!(*test, *tok),
+                None => panic!("unexpected parser error: returned None"),
+            };
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn test_if_expr() -> Result<(), String> {
+        let input = "if (a > b) { c }";
+        let lexer = Lexer::new(input);
+        let mut parser = Parser::new(lexer);
+
+        let program = parser.parse_program()?;
+        let mut statements = program.iter();
+
+        let tests = [Statement::ExpressionStatement(Expression::IfExpression {
+            condition: Box::new(Expression::InfixExpression {
+                operator: Token::GreaterThan,
+                left: Box::new(Expression::Ident(Token::Ident("a".to_string()))),
+                right: Box::new(Expression::Ident(Token::Ident("b".to_string()))),
+            }),
+            consequence: Box::new(vec![Statement::ExpressionStatement(Expression::Ident(
+                Token::Ident("c".to_string()),
+            ))]),
+            alternative: None,
+        })];
+
+        for test in &tests {
+            match statements.next() {
+                Some(tok) => assert_eq!(*test, *tok),
+                None => panic!("unexpected parser error: returned None"),
+            };
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn test_if_else_expr() -> Result<(), String> {
+        let input = "if (a > b) { c } else { d }";
+        let lexer = Lexer::new(input);
+        let mut parser = Parser::new(lexer);
+
+        let program = parser.parse_program()?;
+        let mut statements = program.iter();
+
+        let tests = [Statement::ExpressionStatement(Expression::IfExpression {
+            condition: Box::new(Expression::InfixExpression {
+                operator: Token::GreaterThan,
+                left: Box::new(Expression::Ident(Token::Ident("a".to_string()))),
+                right: Box::new(Expression::Ident(Token::Ident("b".to_string()))),
+            }),
+            consequence: Box::new(vec![Statement::ExpressionStatement(Expression::Ident(
+                Token::Ident("c".to_string()),
+            ))]),
+            alternative: Some(Box::new(vec![Statement::ExpressionStatement(
+                Expression::Ident(Token::Ident("d".to_string())),
+            )])),
+        })];
 
         for test in &tests {
             match statements.next() {
