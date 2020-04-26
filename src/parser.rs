@@ -97,6 +97,7 @@ impl<'a> Parser<'a> {
         let mut left = match self.cursor {
             Token::Ident(_) => Ok(Expression::Ident(self.cursor.clone())),
             Token::IntLiteral(i) => Ok(Expression::IntLiteral(i)),
+            Token::BoolLiteral(b) => Ok(Expression::BoolLiteral(b)),
             Token::Bang => self.parse_prefix_expr(),
             Token::Minus => self.parse_prefix_expr(),
             _ => Err(format!("unexpected token {:?} in expression", self.cursor)),
@@ -247,6 +248,29 @@ mod tests {
         let tests = [Statement::ExpressionStatement(Expression::Ident(
             Token::Ident("foobar".to_string()),
         ))];
+
+        for test in &tests {
+            match statements.next() {
+                Some(tok) => assert_eq!(*test, *tok),
+                None => panic!("unexpected parser error: returned None"),
+            };
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn test_boolean_expr() -> Result<(), String> {
+        let input = "true; false";
+        let lexer = Lexer::new(input);
+        let mut parser = Parser::new(lexer);
+
+        let program = parser.parse_program()?;
+        let mut statements = program.iter();
+
+        let tests = [
+            Statement::ExpressionStatement(Expression::BoolLiteral(true)),
+            Statement::ExpressionStatement(Expression::BoolLiteral(false)),
+        ];
 
         for test in &tests {
             match statements.next() {
