@@ -27,6 +27,10 @@ pub enum Expression {
         consequence: BlockStatement,
         alternative: Option<BlockStatement>,
     },
+    FunctionLiteral {
+        parameters: Vec<Expression>,
+        body: BlockStatement,
+    },
 }
 
 pub type Program = BlockStatement;
