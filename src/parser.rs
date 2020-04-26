@@ -93,6 +93,13 @@ impl<'a> Parser<'a> {
         })
     }
 
+    fn parse_grouped_expr(&mut self) -> Result<Expression, String> {
+        self.next_token();
+        let expr = self.parse_expression(Precedence::Lowest);
+        self.expect_token(Token::RParen)?;
+        expr
+    }
+
     fn parse_expression(&mut self, precedence: Precedence) -> Result<Expression, String> {
         let mut left = match self.cursor {
             Token::Ident(_) => Ok(Expression::Ident(self.cursor.clone())),
@@ -100,6 +107,7 @@ impl<'a> Parser<'a> {
             Token::BoolLiteral(b) => Ok(Expression::BoolLiteral(b)),
             Token::Bang => self.parse_prefix_expr(),
             Token::Minus => self.parse_prefix_expr(),
+            Token::LParen => self.parse_grouped_expr(),
             _ => Err(format!("unexpected token {:?} in expression", self.cursor)),
         }?;
 
@@ -385,6 +393,50 @@ mod tests {
                 operator: Token::NotEqual,
                 left: Box::new(Expression::IntLiteral(5)),
                 right: Box::new(Expression::IntLiteral(5)),
+            }),
+        ];
+
+        for test in &tests {
+            match statements.next() {
+                Some(tok) => assert_eq!(*test, *tok),
+                None => panic!("unexpected parser error: returned None"),
+            };
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn test_precedence_expr() -> Result<(), String> {
+        let input = "1 * (2 + 3);
+        1 + (2 + 3) + 4;";
+        let lexer = Lexer::new(input);
+        let mut parser = Parser::new(lexer);
+
+        let program = parser.parse_program()?;
+        let mut statements = program.iter();
+
+        let tests = [
+            Statement::ExpressionStatement(Expression::InfixExpression {
+                operator: Token::Asterisk,
+                left: Box::new(Expression::IntLiteral(1)),
+                right: Box::new(Expression::InfixExpression {
+                    operator: Token::Plus,
+                    left: Box::new(Expression::IntLiteral(2)),
+                    right: Box::new(Expression::IntLiteral(3)),
+                }),
+            }),
+            Statement::ExpressionStatement(Expression::InfixExpression {
+                operator: Token::Plus,
+                left: Box::new(Expression::InfixExpression {
+                    operator: Token::Plus,
+                    left: Box::new(Expression::IntLiteral(1)),
+                    right: Box::new(Expression::InfixExpression {
+                        operator: Token::Plus,
+                        left: Box::new(Expression::IntLiteral(2)),
+                        right: Box::new(Expression::IntLiteral(3)),
+                    }),
+                }),
+                right: Box::new(Expression::IntLiteral(4)),
             }),
         ];
 
