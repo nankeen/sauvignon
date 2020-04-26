@@ -176,13 +176,13 @@ impl<'a> Parser<'a> {
             Some(Token::Else) => {
                 self.next_token();
                 self.expect_token(Token::LBrace)?;
-                Some(Box::new(self.parse_block_statement()?))
+                Some(self.parse_block_statement()?)
             }
             _ => None,
         };
         Ok(Expression::IfExpression {
             condition: Box::new(condition),
-            consequence: Box::new(consequence),
+            consequence,
             alternative,
         })
     }
@@ -496,9 +496,9 @@ mod tests {
                 left: Box::new(Expression::Ident(Token::Ident("a".to_string()))),
                 right: Box::new(Expression::Ident(Token::Ident("b".to_string()))),
             }),
-            consequence: Box::new(vec![Statement::ExpressionStatement(Expression::Ident(
+            consequence: vec![Statement::ExpressionStatement(Expression::Ident(
                 Token::Ident("c".to_string()),
-            ))]),
+            ))],
             alternative: None,
         })];
 
@@ -526,12 +526,12 @@ mod tests {
                 left: Box::new(Expression::Ident(Token::Ident("a".to_string()))),
                 right: Box::new(Expression::Ident(Token::Ident("b".to_string()))),
             }),
-            consequence: Box::new(vec![Statement::ExpressionStatement(Expression::Ident(
+            consequence: vec![Statement::ExpressionStatement(Expression::Ident(
                 Token::Ident("c".to_string()),
-            ))]),
-            alternative: Some(Box::new(vec![Statement::ExpressionStatement(
+            ))],
+            alternative: Some(vec![Statement::ExpressionStatement(
                 Expression::Ident(Token::Ident("d".to_string())),
-            )])),
+            )]),
         })];
 
         for test in &tests {

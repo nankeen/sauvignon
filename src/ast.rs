@@ -24,8 +24,8 @@ pub enum Expression {
     },
     IfExpression {
         condition: Box<Expression>,
-        consequence: Box<BlockStatement>,
-        alternative: Option<Box<BlockStatement>>,
+        consequence: BlockStatement,
+        alternative: Option<BlockStatement>,
     },
 }
 
