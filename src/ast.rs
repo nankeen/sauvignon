@@ -28,8 +28,12 @@ pub enum Expression {
         alternative: Option<BlockStatement>,
     },
     FunctionLiteral {
-        parameters: Vec<Expression>,
+        parameters: Vec<Token>,
         body: BlockStatement,
+    },
+    Call {
+        function: Box<Expression>,
+        arguments: Vec<Expression>,
     },
 }
 
