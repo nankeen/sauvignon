@@ -122,6 +122,7 @@ impl<'a> Parser<'a> {
                 Some(Token::NotEqual) => self.parse_infix_expr(left)?,
                 Some(Token::LessThan) => self.parse_infix_expr(left)?,
                 Some(Token::GreaterThan) => self.parse_infix_expr(left)?,
+                Some(Token::LParen) => self.parse_call_expr(left)?,
                 _ => break,
             };
         }
@@ -150,6 +151,7 @@ impl<'a> Parser<'a> {
             Token::Minus => Precedence::Sum,
             Token::Slash => Precedence::Product,
             Token::Asterisk => Precedence::Product,
+            Token::LParen => Precedence::Call,
             _ => Precedence::Lowest,
         }
     }
@@ -207,7 +209,37 @@ impl<'a> Parser<'a> {
         Ok(Expression::FunctionLiteral { parameters, body })
     }
 
-    fn parse_fn_params(&mut self) -> Result<Vec<Expression>, String> {
+    fn parse_fn_params(&mut self) -> Result<Vec<Token>, String> {
+        let mut params = Vec::new();
+        if let Some(Token::RParen) = self.lexer.peek() {
+            self.next_token();
+            return Ok(params);
+        };
+
+        self.expect_token(Token::Ident("".to_string()))?;
+
+        params.push(self.cursor.clone());
+
+        while let Some(Token::Comma) = self.lexer.peek() {
+            self.next_token();
+            self.expect_token(Token::Ident("".to_string()))?;
+            params.push(self.cursor.clone());
+        }
+        self.expect_token(Token::RParen)?;
+
+        Ok(params)
+    }
+
+    fn parse_call_expr(&mut self, func: Expression) -> Result<Expression, String> {
+        self.next_token();
+        let arguments = self.parse_call_args()?;
+        Ok(Expression::Call {
+            function: Box::new(func),
+            arguments,
+        })
+    }
+
+    fn parse_call_args(&mut self) -> Result<Vec<Expression>, String> {
         let mut params = Vec::new();
         if let Some(Token::RParen) = self.lexer.peek() {
             self.next_token();
@@ -216,12 +248,12 @@ impl<'a> Parser<'a> {
 
         self.next_token();
 
-        params.push(Expression::Ident(self.cursor.clone()));
+        params.push(self.parse_expression(Precedence::Lowest)?);
 
         while let Some(Token::Comma) = self.lexer.peek() {
             self.next_token();
             self.next_token();
-            params.push(Expression::Ident(self.cursor.clone()));
+            params.push(self.parse_expression(Precedence::Lowest)?);
         }
         self.expect_token(Token::RParen)?;
 
@@ -591,12 +623,44 @@ mod tests {
                         right: Box::new(Expression::IntLiteral(2)),
                     },
                 )],
-                parameters: vec![
-                    Expression::Ident(Token::Ident("a".to_string())),
-                    Expression::Ident(Token::Ident("b".to_string())),
-                ],
+                parameters: vec![Token::Ident("a".to_string()), Token::Ident("b".to_string())],
             },
         )];
+
+        for test in &tests {
+            match statements.next() {
+                Some(tok) => assert_eq!(*test, *tok),
+                None => panic!("unexpected parser error: returned None"),
+            };
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn test_call_expr() -> Result<(), String> {
+        let input = "add(a, 1+2, 5 == 6);";
+        let lexer = Lexer::new(input);
+        let mut parser = Parser::new(lexer);
+
+        let program = parser.parse_program()?;
+        let mut statements = program.iter();
+
+        let tests = [Statement::ExpressionStatement(Expression::Call {
+            function: Box::new(Expression::Ident(Token::Ident("add".to_string()))),
+            arguments: vec![
+                Expression::Ident(Token::Ident("a".to_string())),
+                Expression::InfixExpression {
+                    operator: Token::Plus,
+                    left: Box::new(Expression::IntLiteral(1)),
+                    right: Box::new(Expression::IntLiteral(2)),
+                },
+                Expression::InfixExpression {
+                    operator: Token::Equal,
+                    left: Box::new(Expression::IntLiteral(5)),
+                    right: Box::new(Expression::IntLiteral(6)),
+                },
+            ],
+        })];
 
         for test in &tests {
             match statements.next() {
