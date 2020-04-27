@@ -1,4 +1,5 @@
-use crate::lexer::{Lexer, Token};
+use crate::lexer::Lexer;
+use crate::parser::Parser;
 use std::io::{BufRead, Stdin, Stdout, Write};
 
 pub fn start(input: Stdin, mut output: Stdout) {
@@ -7,11 +8,11 @@ pub fn start(input: Stdin, mut output: Stdout) {
     for line in input.lock().lines() {
         let line = line.unwrap();
         let lexer = Lexer::new(&line);
-        for tok in lexer {
-            if tok == Token::EOF {
-                break;
-            }
-            println!("{:?}", tok);
+        let mut parser = Parser::new(lexer);
+        let program = parser.parse_program();
+        match program {
+            Ok(p) => println!("{:?}", p),
+            Err(e) => println!("Parser error: {}", e),
         }
         print!(">> ");
         output.flush().unwrap();

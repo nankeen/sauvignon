@@ -22,6 +22,19 @@ pub enum Expression {
         left: Box<Expression>,
         right: Box<Expression>,
     },
+    IfExpression {
+        condition: Box<Expression>,
+        consequence: BlockStatement,
+        alternative: Option<BlockStatement>,
+    },
+    FunctionLiteral {
+        parameters: Vec<Token>,
+        body: BlockStatement,
+    },
+    Call {
+        function: Box<Expression>,
+        arguments: Vec<Expression>,
+    },
 }
 
 pub type Program = BlockStatement;
