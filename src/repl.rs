@@ -1,6 +1,6 @@
+use crate::evaluator::Evaluator;
 use crate::lexer::Lexer;
 use crate::parser::Parser;
-use crate::evaluator::Evaluator;
 use std::io::{BufRead, Stdin, Stdout, Write};
 
 pub fn start(input: Stdin, mut output: Stdout) {
