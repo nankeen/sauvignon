@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 mod object;
-use crate::ast::{Program, BlockStatement, Statement, Expression};
+use crate::ast::{Expression, Statement};
 use object::*;
 
 pub struct Evaluator {}
@@ -10,11 +10,11 @@ impl Evaluator {
         Evaluator {}
     }
 
-    pub fn eval_program(&self, program: &Program) -> Result<Object, &str> {
+    pub fn eval_program(&self, program: &[Statement]) -> Result<Object, &str> {
         self.eval_blockstatement(program)
     }
 
-    fn eval_blockstatement(&self, blockstmt: &BlockStatement) -> Result<Object, &str> {
+    fn eval_blockstatement(&self, blockstmt: &[Statement]) -> Result<Object, &str> {
         let mut result = Ok(Object::Null);
         for stmt in blockstmt {
             result = self.eval_statement(stmt);
@@ -39,9 +39,9 @@ impl Evaluator {
 
 #[cfg(test)]
 mod tests {
+    use super::{Evaluator, Object};
     use crate::lexer::Lexer;
     use crate::parser::Parser;
-    use super::{Evaluator, Object};
 
     fn eval_compare(input: &str, object: Object) {
         let lexer = Lexer::new(input);
