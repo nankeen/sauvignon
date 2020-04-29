@@ -6,7 +6,7 @@ use std::io::{BufRead, Stdin, Stdout, Write};
 pub fn start(input: Stdin, mut output: Stdout) {
     print!(">> ");
     output.flush().unwrap();
-    let evaluator = Evaluator::new();
+    let mut evaluator = Evaluator::new();
     for line in input.lock().lines() {
         let line = line.unwrap();
         let lexer = Lexer::new(&line);
