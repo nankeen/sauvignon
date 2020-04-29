@@ -178,9 +178,9 @@ impl<'a> Parser<'a> {
             Some(Token::Else) => {
                 self.next_token();
                 self.expect_token(Token::LBrace)?;
-                Some(self.parse_block_statement()?)
+                self.parse_block_statement()?
             }
-            _ => None,
+            _ => Vec::new(),
         };
         Ok(Expression::IfExpression {
             condition: Box::new(condition),
@@ -560,7 +560,7 @@ mod tests {
             consequence: vec![Statement::ExpressionStatement(Expression::Ident(
                 Token::Ident("c".to_string()),
             ))],
-            alternative: None,
+            alternative: vec![],
         })];
 
         for test in &tests {
@@ -590,9 +590,9 @@ mod tests {
             consequence: vec![Statement::ExpressionStatement(Expression::Ident(
                 Token::Ident("c".to_string()),
             ))],
-            alternative: Some(vec![Statement::ExpressionStatement(Expression::Ident(
+            alternative: vec![Statement::ExpressionStatement(Expression::Ident(
                 Token::Ident("d".to_string()),
-            ))]),
+            ))],
         })];
 
         for test in &tests {
