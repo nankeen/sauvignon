@@ -98,10 +98,10 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_expression(&mut self, precedence: Precedence) -> Result<Expression, String> {
-        let mut left = match self.cursor {
-            Token::Ident(_) => Ok(Expression::Ident(self.cursor.clone())),
-            Token::IntLiteral(i) => Ok(Expression::IntLiteral(i)),
-            Token::BoolLiteral(b) => Ok(Expression::BoolLiteral(b)),
+        let mut left = match &self.cursor {
+            Token::Ident(s) => Ok(Expression::Ident(s.to_string())),
+            Token::IntLiteral(i) => Ok(Expression::IntLiteral(*i)),
+            Token::BoolLiteral(b) => Ok(Expression::BoolLiteral(*b)),
             Token::Bang => self.parse_prefix_expr(),
             Token::Minus => self.parse_prefix_expr(),
             Token::LParen => self.parse_grouped_expr(),
@@ -347,7 +347,7 @@ mod tests {
         let mut statements = program.iter();
 
         let tests = [Statement::ExpressionStatement(Expression::Ident(
-            Token::Ident("foobar".to_string()),
+            "foobar".to_string(),
         ))];
 
         for test in &tests {
@@ -554,11 +554,11 @@ mod tests {
         let tests = [Statement::ExpressionStatement(Expression::IfExpression {
             condition: Box::new(Expression::InfixExpression {
                 operator: Token::GreaterThan,
-                left: Box::new(Expression::Ident(Token::Ident("a".to_string()))),
-                right: Box::new(Expression::Ident(Token::Ident("b".to_string()))),
+                left: Box::new(Expression::Ident("a".to_string())),
+                right: Box::new(Expression::Ident("b".to_string())),
             }),
             consequence: vec![Statement::ExpressionStatement(Expression::Ident(
-                Token::Ident("c".to_string()),
+                "c".to_string(),
             ))],
             alternative: vec![],
         })];
@@ -584,14 +584,14 @@ mod tests {
         let tests = [Statement::ExpressionStatement(Expression::IfExpression {
             condition: Box::new(Expression::InfixExpression {
                 operator: Token::GreaterThan,
-                left: Box::new(Expression::Ident(Token::Ident("a".to_string()))),
-                right: Box::new(Expression::Ident(Token::Ident("b".to_string()))),
+                left: Box::new(Expression::Ident("a".to_string())),
+                right: Box::new(Expression::Ident("b".to_string())),
             }),
             consequence: vec![Statement::ExpressionStatement(Expression::Ident(
-                Token::Ident("c".to_string()),
+                "c".to_string(),
             ))],
             alternative: vec![Statement::ExpressionStatement(Expression::Ident(
-                Token::Ident("d".to_string()),
+                "d".to_string(),
             ))],
         })];
 
@@ -645,9 +645,9 @@ mod tests {
         let mut statements = program.iter();
 
         let tests = [Statement::ExpressionStatement(Expression::Call {
-            function: Box::new(Expression::Ident(Token::Ident("add".to_string()))),
+            function: Box::new(Expression::Ident("add".to_string())),
             arguments: vec![
-                Expression::Ident(Token::Ident("a".to_string())),
+                Expression::Ident("a".to_string()),
                 Expression::InfixExpression {
                     operator: Token::Plus,
                     left: Box::new(Expression::IntLiteral(1)),

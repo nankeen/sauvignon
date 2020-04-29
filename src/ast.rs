@@ -9,7 +9,7 @@ pub enum Statement {
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Expression {
-    Ident(Token),
+    Ident(String),
     IntLiteral(i64),
     BoolLiteral(bool),
     PrefixExpression {
