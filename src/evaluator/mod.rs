@@ -1,17 +1,23 @@
 #![allow(dead_code)]
+mod environment;
 mod object;
 use crate::ast::{Expression, Statement};
 use crate::lexer::Token;
+use environment::*;
 use object::*;
 
-pub struct Evaluator {}
+pub struct Evaluator {
+    env: Environment,
+}
 
 impl Evaluator {
     pub fn new() -> Evaluator {
-        Evaluator {}
+        Evaluator {
+            env: Environment::new(),
+        }
     }
 
-    pub fn eval_program(&self, program: &[Statement]) -> Result<Object, &str> {
+    pub fn eval_program(&mut self, program: &[Statement]) -> Result<Object, String> {
         let mut result = Object::Null;
         for stmt in program {
             result = self.eval_statement(stmt)?;
@@ -22,7 +28,7 @@ impl Evaluator {
         Ok(result)
     }
 
-    fn eval_blockstatement(&self, blockstmt: &[Statement]) -> Result<Object, &str> {
+    fn eval_blockstatement(&mut self, blockstmt: &[Statement]) -> Result<Object, String> {
         let mut result = Object::Null;
         for stmt in blockstmt {
             result = self.eval_statement(stmt)?;
@@ -33,18 +39,26 @@ impl Evaluator {
         Ok(result)
     }
 
-    fn eval_statement(&self, stmt: &Statement) -> Result<Object, &str> {
+    fn eval_statement(&mut self, stmt: &Statement) -> Result<Object, String> {
         match stmt {
             Statement::ExpressionStatement(expr) => self.eval_expression(expr),
             Statement::ReturnStatement(expr) => {
                 let ret = self.eval_expression(expr)?;
                 Ok(Object::ReturnValue(Box::new(ret)))
             }
-            _ => Err("wot"),
+            Statement::LetStatement {
+                ident: Token::Ident(id),
+                expr,
+            } => {
+                let val = self.eval_expression(expr)?;
+                self.env.set(id, &val);
+                Ok(Object::Null)
+            }
+            _ => Err("wot".to_string()),
         }
     }
 
-    fn eval_expression(&self, expr: &Expression) -> Result<Object, &str> {
+    fn eval_expression(&mut self, expr: &Expression) -> Result<Object, String> {
         match expr {
             Expression::IntLiteral(i) => Ok(Object::Integer(*i)),
             Expression::BoolLiteral(b) => Ok(Object::Boolean(*b)),
@@ -66,7 +80,15 @@ impl Evaluator {
                 consequence,
                 alternative,
             } => self.eval_if_expr(condition, consequence, alternative),
-            _ => Err("not implemented"),
+            Expression::Ident(id) => self.eval_identifier(id),
+            _ => Err("not implemented".to_string()),
+        }
+    }
+
+    fn eval_identifier(&self, id: &str) -> Result<Object, String> {
+        match self.env.get(id) {
+            Some(obj) => Ok(obj),
+            None => Err(format!("identifier {:?} not found", id)),
         }
     }
 
@@ -79,11 +101,11 @@ impl Evaluator {
     }
 
     fn eval_if_expr(
-        &self,
+        &mut self,
         condition: &Expression,
         consequence: &[Statement],
         alternative: &[Statement],
-    ) -> Result<Object, &str> {
+    ) -> Result<Object, String> {
         let cond_eval = self.eval_expression(condition)?;
         if self.is_truthy(&cond_eval) {
             self.eval_blockstatement(consequence)
@@ -92,48 +114,48 @@ impl Evaluator {
         }
     }
 
-    fn eval_infix_expr(&self, op: &Token, left: &Object, right: &Object) -> Result<Object, &str> {
+    fn eval_infix_expr(&self, op: &Token, left: &Object, right: &Object) -> Result<Object, String> {
         match op {
             Token::Plus => match (left, right) {
                 (Object::Integer(l), Object::Integer(r)) => Ok(Object::Integer(l + r)),
-                _ => Err("type mismatch for infix plus"),
+                _ => Err(format!("type mismatch {:?} {:?} {:?}", left, right, op)),
             },
             Token::Minus => match (left, right) {
                 (Object::Integer(l), Object::Integer(r)) => Ok(Object::Integer(l - r)),
-                _ => Err("type mismatch for infix minus"),
+                _ => Err(format!("type mismatch {:?} {:?} {:?}", left, right, op)),
             },
             Token::Asterisk => match (left, right) {
                 (Object::Integer(l), Object::Integer(r)) => Ok(Object::Integer(l * r)),
-                _ => Err("type mismatch for infix multiply"),
+                _ => Err(format!("type mismatch {:?} {:?} {:?}", left, right, op)),
             },
             Token::Slash => match (left, right) {
                 (Object::Integer(l), Object::Integer(r)) => Ok(Object::Integer(l / r)),
-                _ => Err("type mismatch for infix divide"),
+                _ => Err(format!("type mismatch {:?} {:?} {:?}", left, right, op)),
             },
             Token::Equal => Ok(Object::Boolean(left == right)),
             Token::NotEqual => Ok(Object::Boolean(left != right)),
             Token::LessThan => Ok(Object::Boolean(left < right)),
             Token::GreaterThan => Ok(Object::Boolean(left > right)),
-            _ => Err("unknown infix operator"),
+            _ => Err(format!("unknown infix operator {:?}", op)),
         }
     }
 
-    fn eval_prefix_expr(&self, op: &Token, right: &Object) -> Result<Object, &str> {
+    fn eval_prefix_expr(&self, op: &Token, right: &Object) -> Result<Object, String> {
         match op {
             Token::Bang => self.eval_bang_prefix(right),
             Token::Minus => self.eval_minus_prefix(right),
-            _ => Err("unknown prefix operator"),
+            _ => Err(format!("unknown infix operator {:?}", op)),
         }
     }
 
-    fn eval_minus_prefix(&self, right: &Object) -> Result<Object, &str> {
+    fn eval_minus_prefix(&self, right: &Object) -> Result<Object, String> {
         match right {
             Object::Integer(i) => Ok(Object::Integer(-i)),
             _ => Ok(Object::Null),
         }
     }
 
-    fn eval_bang_prefix(&self, right: &Object) -> Result<Object, &str> {
+    fn eval_bang_prefix(&self, right: &Object) -> Result<Object, String> {
         match right {
             Object::Boolean(true) => Ok(Object::Boolean(false)),
             Object::Boolean(false) => Ok(Object::Boolean(true)),
@@ -153,7 +175,7 @@ mod tests {
         let lexer = Lexer::new(input);
         let mut parser = Parser::new(lexer);
         let program = parser.parse_program().unwrap();
-        let evaluator = Evaluator::new();
+        let mut evaluator = Evaluator::new();
         let eval = evaluator.eval_program(&program).unwrap();
         assert_eq!(eval, object);
     }
@@ -226,5 +248,12 @@ mod tests {
             "if (true) { if (true) { return 32; } return 64; }",
             Object::Integer(32),
         );
+    }
+
+    #[test]
+    fn test_let_statements() {
+        eval_compare("let a = 32; a", Object::Integer(32));
+        eval_compare("let a = 2 * 8; a", Object::Integer(16));
+        eval_compare("let a = 8; let b = a * 2; b", Object::Integer(16));
     }
 }
