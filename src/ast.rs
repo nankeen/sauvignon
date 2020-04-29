@@ -24,7 +24,7 @@ pub enum Expression {
     IfExpression {
         condition: Box<Expression>,
         consequence: BlockStatement,
-        alternative: Option<BlockStatement>,
+        alternative: BlockStatement,
     },
     FunctionLiteral {
         parameters: Vec<Token>,

@@ -12,20 +12,34 @@ impl Evaluator {
     }
 
     pub fn eval_program(&self, program: &[Statement]) -> Result<Object, &str> {
-        self.eval_blockstatement(program)
+        let mut result = Object::Null;
+        for stmt in program {
+            result = self.eval_statement(stmt)?;
+            if let Object::ReturnValue(val) = result {
+                return Ok(*val);
+            }
+        }
+        Ok(result)
     }
 
     fn eval_blockstatement(&self, blockstmt: &[Statement]) -> Result<Object, &str> {
-        let mut result = Ok(Object::Null);
+        let mut result = Object::Null;
         for stmt in blockstmt {
-            result = self.eval_statement(stmt);
+            result = self.eval_statement(stmt)?;
+            if let Object::ReturnValue(_) = result {
+                break;
+            }
         }
-        result
+        Ok(result)
     }
 
     fn eval_statement(&self, stmt: &Statement) -> Result<Object, &str> {
         match stmt {
             Statement::ExpressionStatement(expr) => self.eval_expression(expr),
+            Statement::ReturnStatement(expr) => {
+                let ret = self.eval_expression(expr)?;
+                Ok(Object::ReturnValue(Box::new(ret)))
+            }
             _ => Err("wot"),
         }
     }
@@ -47,7 +61,34 @@ impl Evaluator {
                 let eval_r = self.eval_expression(right)?;
                 self.eval_infix_expr(operator, &eval_l, &eval_r)
             }
+            Expression::IfExpression {
+                condition,
+                consequence,
+                alternative,
+            } => self.eval_if_expr(condition, consequence, alternative),
             _ => Err("not implemented"),
+        }
+    }
+
+    fn is_truthy(&self, obj: &Object) -> bool {
+        match obj {
+            Object::Boolean(b) => *b,
+            Object::Null => false,
+            _ => true,
+        }
+    }
+
+    fn eval_if_expr(
+        &self,
+        condition: &Expression,
+        consequence: &[Statement],
+        alternative: &[Statement],
+    ) -> Result<Object, &str> {
+        let cond_eval = self.eval_expression(condition)?;
+        if self.is_truthy(&cond_eval) {
+            self.eval_blockstatement(consequence)
+        } else {
+            self.eval_blockstatement(alternative)
         }
     }
 
@@ -55,19 +96,19 @@ impl Evaluator {
         match op {
             Token::Plus => match (left, right) {
                 (Object::Integer(l), Object::Integer(r)) => Ok(Object::Integer(l + r)),
-                _ => Err("expected integer for infix plus"),
+                _ => Err("type mismatch for infix plus"),
             },
             Token::Minus => match (left, right) {
                 (Object::Integer(l), Object::Integer(r)) => Ok(Object::Integer(l - r)),
-                _ => Err("expected integer for infix minus"),
+                _ => Err("type mismatch for infix minus"),
             },
             Token::Asterisk => match (left, right) {
                 (Object::Integer(l), Object::Integer(r)) => Ok(Object::Integer(l * r)),
-                _ => Err("expected integer for infix times"),
+                _ => Err("type mismatch for infix multiply"),
             },
             Token::Slash => match (left, right) {
                 (Object::Integer(l), Object::Integer(r)) => Ok(Object::Integer(l / r)),
-                _ => Err("expected integer for infix divide"),
+                _ => Err("type mismatch for infix divide"),
             },
             Token::Equal => Ok(Object::Boolean(left == right)),
             Token::NotEqual => Ok(Object::Boolean(left != right)),
@@ -81,7 +122,7 @@ impl Evaluator {
         match op {
             Token::Bang => self.eval_bang_prefix(right),
             Token::Minus => self.eval_minus_prefix(right),
-            _ => Err("not implemented"),
+            _ => Err("unknown prefix operator"),
         }
     }
 
@@ -162,5 +203,28 @@ mod tests {
         eval_compare("8 < 16", Object::Boolean(true));
         eval_compare("8 > 16", Object::Boolean(false));
         eval_compare("2 > 16 == false", Object::Boolean(true));
+    }
+
+    #[test]
+    fn test_if_else() {
+        eval_compare("if (true) { 32 }", Object::Integer(32));
+        eval_compare("if (false) { 32 }", Object::Null);
+        eval_compare("if (1) { 32 }", Object::Integer(32));
+        eval_compare("if (32 < 1024) { 32 }", Object::Integer(32));
+        eval_compare("if (32 > 1024) { 32 }", Object::Null);
+        eval_compare("if (32 < 1024) { 32 } else { 64 }", Object::Integer(32));
+        eval_compare("if (32 > 1024) { 32 } else { 64 }", Object::Integer(64));
+    }
+
+    #[test]
+    fn test_return_statements() {
+        eval_compare("return 32;", Object::Integer(32));
+        eval_compare("return 32; 16", Object::Integer(32));
+        eval_compare("return 2 + 2 * 4;", Object::Integer(10));
+        eval_compare("8; return 2 + 2 * 4;", Object::Integer(10));
+        eval_compare(
+            "if (true) { if (true) { return 32; } return 64; }",
+            Object::Integer(32),
+        );
     }
 }
