@@ -12,8 +12,8 @@ Saugvinon is a tree walking interpreter written in Rust.
 - [x] REPL
 - [x] AST constructor
 - [x] Parser
-- [ ] Internal object system
-- [ ] Evaluator
+- [x] Internal object system
+- [x] Evaluator
 
 ## Building
 
