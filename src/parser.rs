@@ -102,6 +102,7 @@ impl<'a> Parser<'a> {
             Token::Ident(s) => Ok(Expression::Ident(s.to_string())),
             Token::IntLiteral(i) => Ok(Expression::IntLiteral(*i)),
             Token::BoolLiteral(b) => Ok(Expression::BoolLiteral(*b)),
+            Token::StringLiteral(s) => Ok(Expression::StringLiteral(s.clone())),
             Token::Bang => self.parse_prefix_expr(),
             Token::Minus => self.parse_prefix_expr(),
             Token::LParen => self.parse_grouped_expr(),
@@ -395,6 +396,28 @@ mod tests {
             Statement::ExpressionStatement(Expression::IntLiteral(5)),
             Statement::ExpressionStatement(Expression::IntLiteral(1024)),
         ];
+
+        for test in &tests {
+            match statements.next() {
+                Some(tok) => assert_eq!(*test, *tok),
+                None => panic!("unexpected parser error: returned None"),
+            };
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn test_string_expr() -> Result<(), String> {
+        let input = "\"cheesecake\"";
+        let lexer = Lexer::new(input);
+        let mut parser = Parser::new(lexer);
+
+        let program = parser.parse_program()?;
+        let mut statements = program.iter();
+
+        let tests = [Statement::ExpressionStatement(Expression::StringLiteral(
+            "cheesecake".to_string(),
+        ))];
 
         for test in &tests {
             match statements.next() {
