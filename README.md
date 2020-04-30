@@ -35,10 +35,22 @@ Supported data types
 
 - Integer
 - Boolean
+- String
 
-### Assignment
+### Mathematical expressions
+
+Do integer arithmetic using `+`, `-`, `*`, and `/`.
+
+```
+(3+2) * 3
+(6 - 1) / 5
+20 / 4 - 5
+```
+
+### Variable binding
 
 Objects can be assigned to identifiers using `let <ident> = <object>`.
+
 ```
 let thirty = 30;
 ```
@@ -59,6 +71,27 @@ After declaring, you can call the functions.
 add(5, 2)
 ```
 
+### Conditionals
+
+Conditional control flow can be achieved using `if` statements.
+
+```
+let a = 5;
+if ( a != 5 ) {
+  return false;
+} else {
+  return true;
+}
+```
+
+### String
+
+String concatenation works using the `+` infix operator.
+
+```
+"I like " + "CHEESECAKE!"
+```
+
 ## TODO:
 
 - [x] Basic Lexer
@@ -68,3 +101,6 @@ add(5, 2)
 - [x] Parser
 - [x] Internal object system
 - [x] Evaluator
+- [ ] Built-in functions
+- [ ] Arrays
+- [ ] Hash maps

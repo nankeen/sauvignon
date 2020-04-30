@@ -7,6 +7,7 @@ pub enum Token {
     Ident(String),
     IntLiteral(i64),
     BoolLiteral(bool),
+    StringLiteral(String),
 
     // Statements
     Assign,
@@ -83,6 +84,20 @@ impl<'a> Lexer<'a> {
         number.parse().unwrap()
     }
 
+    fn read_string(&mut self) -> String {
+        let mut literal = String::new();
+        self.read_char();
+        while let Some(c) = self.cursor {
+            if c == '\"' {
+                break;
+            }
+            literal.push(c);
+            self.read_char();
+        }
+        self.read_char();
+        literal
+    }
+
     fn skip_whitespace(&mut self) {
         while let Some(c) = self.cursor {
             if c != ' ' && c != '\t' && c != '\n' && c != '\r' {
@@ -145,6 +160,10 @@ impl<'a> Iterator for Lexer<'a> {
             Some(')') => Some(Token::RParen),
             Some(',') => Some(Token::Comma),
             Some(';') => Some(Token::Semicolon),
+            Some('"') => {
+                let literal = self.read_string();
+                return Some(Token::StringLiteral(literal));
+            }
             Some(c) if Lexer::is_identifier(c) => {
                 let ident = self.read_identifier();
                 return Some(Lexer::lookup_identifier(&ident));
@@ -185,7 +204,9 @@ mod tests {
         }
 
         10 == 10;
-        10 != 9;";
+        10 != 9;
+        \"cheesecake\"
+        ";
 
         let tests = [
             Token::Let,
@@ -261,6 +282,7 @@ mod tests {
             Token::NotEqual,
             Token::IntLiteral(9),
             Token::Semicolon,
+            Token::StringLiteral("cheesecake".to_string()),
             Token::EOF,
         ];
 

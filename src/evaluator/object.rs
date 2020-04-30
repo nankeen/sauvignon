@@ -9,5 +9,6 @@ pub enum Object {
     Boolean(bool),
     ReturnValue(Box<Object>),
     Function(Vec<Token>, BlockStatement, Rc<RefCell<Environment>>),
+    String(String),
     Null,
 }
