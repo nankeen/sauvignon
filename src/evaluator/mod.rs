@@ -378,11 +378,11 @@ mod tests {
     #[test]
     fn test_eval_infix_bool() {
         eval_compare("正 當同 正", Object::Boolean(true));
-        eval_compare("正 不同 負", Object::Boolean(true));
-        eval_compare("正 不同 負 當同 負", Object::Boolean(false));
+        eval_compare("正 不是 負", Object::Boolean(true));
+        eval_compare("正 不是 負 當同 負", Object::Boolean(false));
 
         eval_compare("32 當同 32", Object::Boolean(true));
-        eval_compare("32 不同 32", Object::Boolean(false));
+        eval_compare("32 不是 32", Object::Boolean(false));
         eval_compare("8 少於 16", Object::Boolean(true));
         eval_compare("8 大於 16", Object::Boolean(false));
         eval_compare("2 大於 16 當同 負", Object::Boolean(true));

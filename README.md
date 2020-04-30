@@ -61,39 +61,39 @@ Do integer arithmetic using `+`, `-`, `*`, and `/`.
 
 ### Variable binding
 
-Objects can be assigned to identifiers using `let <ident> = <object>`.
+Objects can be assigned to identifiers using `讓 <ident> 當 <expression>`.
 
 ```
-let thirty = 30;
+讓 三十 當 30;
 ```
 
 ### Functions
 
-Declare functions using the `fn` keyword.
+Declare functions using the `功能` keyword.
 
 ```
-let add = fn (a, b) {
-   return a + b
-}
+讓 加 當 功能(a, b) 始
+   歸 a + b
+終
 ```
 
 After declaring, you can call the functions.
 
 ```
-add(5, 2)
+加(5, 2)
 ```
 
 ### Conditionals
 
-Conditional control flow can be achieved using `if` statements.
+Conditional control flow can be achieved using `如`...`否則` statements.
 
 ```
-let a = 5;
-if ( a != 5 ) {
-  return false;
-} else {
-  return true;
-}
+讓 a 當 5;
+如 ( a 不是 5 ) 始
+  歸 負;
+終 否則 始
+  歸 正;
+終
 ```
 
 ### String

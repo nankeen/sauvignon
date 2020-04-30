@@ -523,7 +523,7 @@ mod tests {
         let input = "5+5; 5-5;
         5*5; 5 / 5;
         5 大於 5; 5 少於 5;
-        5 當同 5; 5 不同 5";
+        5 當同 5; 5 不是 5";
         let lexer = Lexer::new(input);
         let mut parser = Parser::new(lexer);
 

@@ -113,7 +113,7 @@ impl<'a> Iterator for Lexer<'a> {
             Some('+') => Some(Token::Plus),
             Some('-') => Some(Token::Minus),
             Some('不') => match self.input.peek() {
-                Some('同') => {
+                Some('是') => {
                     self.read_char();
                     Some(Token::NotEqual)
                 }
@@ -174,7 +174,7 @@ mod tests {
         終
 
         10 當同 10;
-        10 不同 9;
+        10 不是 9;
         \"cheesecake\"";
 
         let tests = [
