@@ -367,6 +367,9 @@ mod tests {
 
     #[test]
     fn test_eval_string_concat() {
-        eval_compare("\"cheesecake\" + \" tastes good\"", Object::String("cheesecake tastes good".to_string()));
+        eval_compare(
+            "\"cheesecake\" + \" tastes good\"",
+            Object::String("cheesecake tastes good".to_string()),
+        );
     }
 }
