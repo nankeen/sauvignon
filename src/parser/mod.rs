@@ -312,9 +312,9 @@ mod tests {
 
     #[test]
     fn test_let_statements() -> Result<(), String> {
-        let input = "let x = -1;
-        let y = 10;
-        let foobar = 838383 + 1;";
+        let input = "讓 x 當 -1;
+        讓 y 當 10;
+        讓 foobar 當 838383 + 1;";
         let lexer = Lexer::new(input);
         let mut parser = Parser::new(lexer);
 
@@ -353,9 +353,9 @@ mod tests {
 
     #[test]
     fn test_return_statements() -> Result<(), String> {
-        let input = "return -5;
-        return 10;
-        return 993322;";
+        let input = "歸 -5;
+        歸 10;
+        歸 993322;";
         let lexer = Lexer::new(input);
         let mut parser = Parser::new(lexer);
 
@@ -403,7 +403,7 @@ mod tests {
 
     #[test]
     fn test_boolean_expr() -> Result<(), String> {
-        let input = "true; false";
+        let input = "正; 負";
         let lexer = Lexer::new(input);
         let mut parser = Parser::new(lexer);
 
@@ -492,7 +492,7 @@ mod tests {
 
     #[test]
     fn test_prefix_expr() -> Result<(), String> {
-        let input = "!5; -15;";
+        let input = "不5; -15;";
         let lexer = Lexer::new(input);
         let mut parser = Parser::new(lexer);
 
@@ -522,8 +522,8 @@ mod tests {
     fn test_infix_expr() -> Result<(), String> {
         let input = "5+5; 5-5;
         5*5; 5 / 5;
-        5 > 5; 5 < 5;
-        5 == 5; 5 != 5";
+        5 大於 5; 5 少於 5;
+        5 當同 5; 5 不同 5";
         let lexer = Lexer::new(input);
         let mut parser = Parser::new(lexer);
 
@@ -626,7 +626,7 @@ mod tests {
 
     #[test]
     fn test_if_expr() -> Result<(), String> {
-        let input = "if (a > b) { c }";
+        let input = "如 (a 大於 b) 始 c 終";
         let lexer = Lexer::new(input);
         let mut parser = Parser::new(lexer);
 
@@ -655,7 +655,7 @@ mod tests {
 
     #[test]
     fn test_if_else_expr() -> Result<(), String> {
-        let input = "if (a > b) { c } else { d }";
+        let input = "如 (a 大於 b) 始 c 終 否則 始 d 終";
         let lexer = Lexer::new(input);
         let mut parser = Parser::new(lexer);
 
@@ -686,7 +686,7 @@ mod tests {
 
     #[test]
     fn test_fn_literal_expr() -> Result<(), String> {
-        let input = "fn(a, b) { 1 == 2; }";
+        let input = "功能(a, b) 始 1 當同 2; 終";
         let lexer = Lexer::new(input);
         let mut parser = Parser::new(lexer);
 
@@ -716,7 +716,7 @@ mod tests {
 
     #[test]
     fn test_call_expr() -> Result<(), String> {
-        let input = "add(a, 1+2, 5 == 6);";
+        let input = "add(a, 1+2, 5 當同 6);";
         let lexer = Lexer::new(input);
         let mut parser = Parser::new(lexer);
 

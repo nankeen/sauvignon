@@ -81,13 +81,10 @@ impl<'a> Lexer<'a> {
     fn lookup_identifier(ident: &str) -> Token {
         match ident {
             // Match against keywords
-            "fn" => Token::Function,
-            "let" => Token::Let,
-            "true" => Token::BoolLiteral(true),
-            "false" => Token::BoolLiteral(false),
-            "if" => Token::If,
-            "else" => Token::Else,
-            "return" => Token::Return,
+            "功能" => Token::Function,
+            "少於" => Token::LessThan,
+            "大於" => Token::GreaterThan,
+            "否則" => Token::Else,
             // If it doesn't match, it's an identifier
             s => Token::Ident(s.to_string()),
         }
@@ -100,18 +97,23 @@ impl<'a> Iterator for Lexer<'a> {
         self.skip_whitespace();
 
         let tok = match self.cursor {
-            Some('=') => match self.input.peek() {
+            Some('當') => match self.input.peek() {
                 // Peeks front for `==`
-                Some('=') => {
+                Some('同') => {
                     self.read_char();
                     Some(Token::Equal)
                 }
                 _ => Some(Token::Assign),
             },
+            Some('讓') => Some(Token::Let),
+            Some('正') => Some(Token::BoolLiteral(true)),
+            Some('負') => Some(Token::BoolLiteral(false)),
+            Some('如') => Some(Token::If),
+            Some('歸') => Some(Token::Return),
             Some('+') => Some(Token::Plus),
             Some('-') => Some(Token::Minus),
-            Some('!') => match self.input.peek() {
-                Some('=') => {
+            Some('不') => match self.input.peek() {
+                Some('同') => {
                     self.read_char();
                     Some(Token::NotEqual)
                 }
@@ -119,10 +121,8 @@ impl<'a> Iterator for Lexer<'a> {
             },
             Some('/') => Some(Token::Slash),
             Some('*') => Some(Token::Asterisk),
-            Some('<') => Some(Token::LessThan),
-            Some('>') => Some(Token::GreaterThan),
-            Some('{') => Some(Token::LBrace),
-            Some('}') => Some(Token::RBrace),
+            Some('始') => Some(Token::LBrace),
+            Some('終') => Some(Token::RBrace),
             Some('(') => Some(Token::LParen),
             Some(')') => Some(Token::RParen),
             Some('[') => Some(Token::LBracket),
@@ -157,28 +157,24 @@ mod tests {
 
     #[test]
     fn test_next_token() {
-        let input = "let five = 5;
-        let ten = 10;
-        let add = fn(x, y) {
+        let input = "讓 five 當 5;
+        讓 ten 當 10;
+        讓 add 當 功能(x, y) 始
             x + y;
-        };
+        終;
 
-        let result = add(five, ten);
-        !-/*5;
-        5 < 10 > 5;
+        讓 result 當 add(five, ten);
+        不-/*5;
+        5 少於 10 大於 5;
 
-        if (5 < 10) {
-            return true;
-        } else {
-            return false;
-        }
+        如 (5 少於 10) 始
+            歸 正;
+        終 否則 始
+            歸 負;
+        終
 
-        10 == 10;
-        10 != 9;
-        \"cheesecake\"
-        [32, 64];
-        {\"cheese\": \"cake\"}
-        ";
+        10 當同 10;
+        10 不同 9;";
 
         let tests = [
             Token::Let,

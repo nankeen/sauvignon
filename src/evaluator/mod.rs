@@ -345,18 +345,18 @@ mod tests {
     fn test_eval_simple_expression() {
         eval_compare("32", Object::Integer(32));
         eval_compare("1024", Object::Integer(1024));
-        eval_compare("true", Object::Boolean(true));
-        eval_compare("false", Object::Boolean(false));
+        eval_compare("正", Object::Boolean(true));
+        eval_compare("負", Object::Boolean(false));
     }
 
     #[test]
     fn test_eval_prefix() {
-        eval_compare("!true", Object::Boolean(false));
-        eval_compare("!false", Object::Boolean(true));
-        eval_compare("!!true", Object::Boolean(true));
-        eval_compare("!!false", Object::Boolean(false));
-        eval_compare("!5", Object::Boolean(false));
-        eval_compare("!!5", Object::Boolean(true));
+        eval_compare("不正", Object::Boolean(false));
+        eval_compare("不負", Object::Boolean(true));
+        eval_compare("不不正", Object::Boolean(true));
+        eval_compare("不不負", Object::Boolean(false));
+        eval_compare("不5", Object::Boolean(false));
+        eval_compare("不不5", Object::Boolean(true));
 
         eval_compare("-32", Object::Integer(-32));
         eval_compare("-1024", Object::Integer(-1024));
@@ -377,50 +377,56 @@ mod tests {
 
     #[test]
     fn test_eval_infix_bool() {
-        eval_compare("true == true", Object::Boolean(true));
-        eval_compare("true != false", Object::Boolean(true));
-        eval_compare("true != false == false", Object::Boolean(false));
+        eval_compare("正 當同 正", Object::Boolean(true));
+        eval_compare("正 不同 負", Object::Boolean(true));
+        eval_compare("正 不同 負 當同 負", Object::Boolean(false));
 
-        eval_compare("32 == 32", Object::Boolean(true));
-        eval_compare("32 != 32", Object::Boolean(false));
-        eval_compare("8 < 16", Object::Boolean(true));
-        eval_compare("8 > 16", Object::Boolean(false));
-        eval_compare("2 > 16 == false", Object::Boolean(true));
+        eval_compare("32 當同 32", Object::Boolean(true));
+        eval_compare("32 不同 32", Object::Boolean(false));
+        eval_compare("8 少於 16", Object::Boolean(true));
+        eval_compare("8 大於 16", Object::Boolean(false));
+        eval_compare("2 大於 16 當同 負", Object::Boolean(true));
     }
 
     #[test]
     fn test_if_else() {
-        eval_compare("if (true) { 32 }", Object::Integer(32));
-        eval_compare("if (false) { 32 }", Object::Null);
-        eval_compare("if (1) { 32 }", Object::Integer(32));
-        eval_compare("if (32 < 1024) { 32 }", Object::Integer(32));
-        eval_compare("if (32 > 1024) { 32 }", Object::Null);
-        eval_compare("if (32 < 1024) { 32 } else { 64 }", Object::Integer(32));
-        eval_compare("if (32 > 1024) { 32 } else { 64 }", Object::Integer(64));
+        eval_compare("如 (正) 始 32 終", Object::Integer(32));
+        eval_compare("如 (負) 始 32 終", Object::Null);
+        eval_compare("如 (1) 始 32 終", Object::Integer(32));
+        eval_compare("如 (32 少於 1024) 始 32 終", Object::Integer(32));
+        eval_compare("如 (32 大於 1024) 始 32 終", Object::Null);
+        eval_compare(
+            "如 (32 少於 1024) 始 32 終 否則 始 64 終",
+            Object::Integer(32),
+        );
+        eval_compare(
+            "如 (32 大於 1024) 始 32 終 否則 始 64 終",
+            Object::Integer(64),
+        );
     }
 
     #[test]
     fn test_return_statements() {
-        eval_compare("return 32;", Object::Integer(32));
-        eval_compare("return 32; 16", Object::Integer(32));
-        eval_compare("return 2 + 2 * 4;", Object::Integer(10));
-        eval_compare("8; return 2 + 2 * 4;", Object::Integer(10));
+        eval_compare("歸 32;", Object::Integer(32));
+        eval_compare("歸 32; 16", Object::Integer(32));
+        eval_compare("歸 2 + 2 * 4;", Object::Integer(10));
+        eval_compare("8; 歸 2 + 2 * 4;", Object::Integer(10));
         eval_compare(
-            "if (true) { if (true) { return 32; } return 64; }",
+            "如 (正) 始 如 (正) 始 歸 32; 終 歸 64; 終",
             Object::Integer(32),
         );
     }
 
     #[test]
     fn test_let_statements() {
-        eval_compare("let a = 32; a", Object::Integer(32));
-        eval_compare("let a = 2 * 8; a", Object::Integer(16));
-        eval_compare("let a = 8; let b = a * 2; b", Object::Integer(16));
+        eval_compare("讓 a 當 32; a", Object::Integer(32));
+        eval_compare("讓 a 當 2 * 8; a", Object::Integer(16));
+        eval_compare("讓 a 當 8; 讓 b 當 a * 2; b", Object::Integer(16));
     }
 
     #[test]
-    fn test_eval_function() {
-        let input = "fn(x) { x + 2; };";
+    fn test_function() {
+        let input = "功能(x) 始 x + 2; 終;";
         let lexer = Lexer::new(input);
         let mut parser = Parser::new(lexer);
         let program = parser.parse_program().unwrap();
@@ -438,19 +444,19 @@ mod tests {
             evaluator.env,
         );
         assert_eq!(eval, test_case);
-        eval_compare("let a = fn(x) { x; }; a(32);", Object::Integer(32));
-        eval_compare("let a = fn(x) { return x; }; a(32);", Object::Integer(32));
-        eval_compare("let a = fn(x) { x * 2; }; a(32);", Object::Integer(64));
+        eval_compare("讓 a 當 功能(x) 始 x; 終; a(32);", Object::Integer(32));
+        eval_compare("讓 a 當 功能(x) 始 歸 x; 終; a(32);", Object::Integer(32));
+        eval_compare("讓 a 當 功能(x) 始 x * 2; 終; a(32);", Object::Integer(64));
         eval_compare(
-            "let a = fn(x, y) { x + y; }; a(8, 16);",
+            "讓 a 當 功能(x, y) 始 x + y; 終; a(8, 16);",
             Object::Integer(24),
         );
         eval_compare(
-            "let a = fn(x, y) { x + y; }; a(4 * 2, a(14, 2));",
+            "讓 a 當 功能(x, y) 始 x + y; 終; a(4 * 2, a(14, 2));",
             Object::Integer(24),
         );
 
-        eval_compare("fn(x) { x; }(32);", Object::Integer(32));
+        eval_compare("功能(x) 始 x; 終(32);", Object::Integer(32));
     }
 
     #[test]
