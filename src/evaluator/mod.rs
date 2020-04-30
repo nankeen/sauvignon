@@ -140,9 +140,12 @@ impl Evaluator {
                 }
             }
             self.env = Rc::new(RefCell::new(new_env));
-            let result = self.eval_blockstatement(body);
+            let result = self.eval_blockstatement(body)?;
             self.env = saved_env;
-            result
+            if let Object::ReturnValue(val) = result {
+                return Ok(*val);
+            }
+            Ok(result)
         }
     }
 
@@ -370,6 +373,21 @@ mod tests {
         eval_compare(
             "\"cheesecake\" + \" tastes good\"",
             Object::String("cheesecake tastes good".to_string()),
+        );
+    }
+
+    #[test]
+    fn test_eval_recursion() {
+        eval_compare(
+            "let fib = fn(n) {
+            if (n < 3) {
+                return 1;
+            }
+            return fib(n-1) + fib(n-2);
+        };
+        fib(4);
+        ",
+            Object::Integer(3),
         );
     }
 }
