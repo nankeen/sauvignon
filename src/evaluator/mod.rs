@@ -1,19 +1,20 @@
-#![allow(dead_code)]
 mod environment;
 mod object;
 use crate::ast::{Expression, Statement};
 use crate::lexer::Token;
 use environment::*;
 use object::*;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 pub struct Evaluator {
-    env: Environment,
+    env: Rc<RefCell<Environment>>,
 }
 
 impl Evaluator {
     pub fn new() -> Evaluator {
         Evaluator {
-            env: Environment::new(),
+            env: Rc::new(RefCell::new(Environment::new())),
         }
     }
 
@@ -51,7 +52,7 @@ impl Evaluator {
                 expr,
             } => {
                 let val = self.eval_expression(expr)?;
-                self.env.set(id, &val);
+                self.env.borrow_mut().set(id, &val);
                 Ok(Object::Null)
             }
             _ => Err("wot".to_string()),
@@ -80,13 +81,72 @@ impl Evaluator {
                 consequence,
                 alternative,
             } => self.eval_if_expr(condition, consequence, alternative),
+            Expression::FunctionLiteral { parameters, body } => Ok(Object::Function(
+                parameters.clone(),
+                body.clone(),
+                Rc::clone(&self.env),
+            )),
+            Expression::Call {
+                function,
+                arguments,
+            } => self.eval_call(function, &arguments),
             Expression::Ident(id) => self.eval_identifier(id),
-            _ => Err("not implemented".to_string()),
+        }
+    }
+
+    fn eval_call(&mut self, func: &Expression, args: &[Expression]) -> Result<Object, String> {
+        let func_obj = self.eval_expression(func)?;
+        match func_obj {
+            Object::Function(parameters, body, f_env) => {
+                self.eval_fn_call(args, &parameters, &body, f_env)
+            }
+            _ => Err(format!(
+                "expected function type for call, got {:?} instead",
+                func_obj
+            )),
+        }
+    }
+
+    fn eval_fn_call(
+        &mut self,
+        args: &[Expression],
+        params: &[Token],
+        body: &[Statement],
+        f_env: Rc<RefCell<Environment>>,
+    ) -> Result<Object, String> {
+        if args.len() != params.len() {
+            Err(format!(
+                "expected {:?} arguments, got {:?} instead",
+                args.len(),
+                params.len()
+            ))
+        } else {
+            let args_objs = args
+                .iter()
+                .map(|expr| self.eval_expression(expr).unwrap())
+                .collect::<Vec<_>>();
+            let saved_env = Rc::clone(&self.env);
+            let mut new_env = Environment::new_enclosed(Rc::clone(&f_env));
+            for (ident, obj) in params.iter().zip(args_objs.iter()) {
+                match ident {
+                    Token::Ident(name) => new_env.set(name, obj),
+                    _ => {
+                        return Err(format!(
+                            "expected identifier for parameter got type {:?}",
+                            ident
+                        ))
+                    }
+                }
+            }
+            self.env = Rc::new(RefCell::new(new_env));
+            let result = self.eval_blockstatement(body);
+            self.env = saved_env;
+            result
         }
     }
 
     fn eval_identifier(&self, id: &str) -> Result<Object, String> {
-        match self.env.get(id) {
+        match self.env.borrow().get(id) {
             Some(obj) => Ok(obj),
             None => Err(format!("identifier {:?} not found", id)),
         }
@@ -134,8 +194,14 @@ impl Evaluator {
             },
             Token::Equal => Ok(Object::Boolean(left == right)),
             Token::NotEqual => Ok(Object::Boolean(left != right)),
-            Token::LessThan => Ok(Object::Boolean(left < right)),
-            Token::GreaterThan => Ok(Object::Boolean(left > right)),
+            Token::LessThan => match (left, right) {
+                (Object::Integer(l), Object::Integer(r)) => Ok(Object::Boolean(l < r)),
+                _ => Err(format!("type mismatch {:?} {:?} {:?}", left, right, op)),
+            },
+            Token::GreaterThan => match (left, right) {
+                (Object::Integer(l), Object::Integer(r)) => Ok(Object::Boolean(l > r)),
+                _ => Err(format!("type mismatch {:?} {:?} {:?}", left, right, op)),
+            },
             _ => Err(format!("unknown infix operator {:?}", op)),
         }
     }
@@ -167,7 +233,7 @@ impl Evaluator {
 
 #[cfg(test)]
 mod tests {
-    use super::{Evaluator, Object};
+    use super::{Evaluator, Expression, Object, Statement, Token};
     use crate::lexer::Lexer;
     use crate::parser::Parser;
 
@@ -255,5 +321,40 @@ mod tests {
         eval_compare("let a = 32; a", Object::Integer(32));
         eval_compare("let a = 2 * 8; a", Object::Integer(16));
         eval_compare("let a = 8; let b = a * 2; b", Object::Integer(16));
+    }
+
+    #[test]
+    fn test_function() {
+        let input = "fn(x) { x + 2; };";
+        let lexer = Lexer::new(input);
+        let mut parser = Parser::new(lexer);
+        let program = parser.parse_program().unwrap();
+        let mut evaluator = Evaluator::new();
+        let eval = evaluator.eval_program(&program).unwrap();
+        let test_case = Object::Function(
+            vec![Token::Ident("x".to_string())],
+            vec![Statement::ExpressionStatement(
+                Expression::InfixExpression {
+                    left: Box::new(Expression::Ident("x".to_string())),
+                    operator: Token::Plus,
+                    right: Box::new(Expression::IntLiteral(2)),
+                },
+            )],
+            evaluator.env,
+        );
+        assert_eq!(eval, test_case);
+        eval_compare("let a = fn(x) { x; }; a(32);", Object::Integer(32));
+        eval_compare("let a = fn(x) { return x; }; a(32);", Object::Integer(32));
+        eval_compare("let a = fn(x) { x * 2; }; a(32);", Object::Integer(64));
+        eval_compare(
+            "let a = fn(x, y) { x + y; }; a(8, 16);",
+            Object::Integer(24),
+        );
+        eval_compare(
+            "let a = fn(x, y) { x + y; }; a(4 * 2, a(14, 2));",
+            Object::Integer(24),
+        );
+
+        eval_compare("fn(x) { x; }(32);", Object::Integer(32));
     }
 }
