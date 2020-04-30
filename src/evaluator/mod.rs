@@ -63,6 +63,7 @@ impl Evaluator {
         match expr {
             Expression::IntLiteral(i) => Ok(Object::Integer(*i)),
             Expression::BoolLiteral(b) => Ok(Object::Boolean(*b)),
+            Expression::StringLiteral(s) => Ok(Object::String(s.clone())),
             Expression::PrefixExpression { right, operator } => {
                 let eval_r = self.eval_expression(right)?;
                 self.eval_prefix_expr(operator, &eval_r)
@@ -178,6 +179,7 @@ impl Evaluator {
         match op {
             Token::Plus => match (left, right) {
                 (Object::Integer(l), Object::Integer(r)) => Ok(Object::Integer(l + r)),
+                (Object::String(l), Object::String(r)) => Ok(Object::String(l.clone() + r)),
                 _ => Err(format!("type mismatch {:?} {:?} {:?}", left, right, op)),
             },
             Token::Minus => match (left, right) {
@@ -356,5 +358,18 @@ mod tests {
         );
 
         eval_compare("fn(x) { x; }(32);", Object::Integer(32));
+    }
+
+    #[test]
+    fn test_eval_string() {
+        eval_compare("\"cheesecake\"", Object::String("cheesecake".to_string()));
+    }
+
+    #[test]
+    fn test_eval_string_concat() {
+        eval_compare(
+            "\"cheesecake\" + \" tastes good\"",
+            Object::String("cheesecake tastes good".to_string()),
+        );
     }
 }
