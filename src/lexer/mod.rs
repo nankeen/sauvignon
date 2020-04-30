@@ -174,7 +174,8 @@ mod tests {
         終
 
         10 當同 10;
-        10 不同 9;";
+        10 不同 9;
+        \"cheesecake\"";
 
         let tests = [
             Token::Let,
