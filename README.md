@@ -29,6 +29,13 @@ $ cargo build
 $ ./target/debug/sauvignon
 ```
 
+### Data Types
+
+Supported data types
+
+- Integer
+- Boolean
+
 ### Assignment
 
 Objects can be assigned to identifiers using `let <ident> = <object>`.
