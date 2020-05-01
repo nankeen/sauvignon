@@ -1,9 +1,18 @@
-Saugvinon
+Sauvignon
 =========
 
-![](https://github.com/nankeen/sauvignon/workflows/CI/badge.svg)
+![CI lint & build](https://github.com/nankeen/sauvignon/workflows/CI/badge.svg)
+![GitHub last commit](https://img.shields.io/github/last-commit/nankeen/sauvignon)
+![GitHub](https://img.shields.io/github/license/nankeen/sauvignon)
+![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/nankeen/sauvignon)
 
-Saugvinon is a tree walking interpreter written in Rust.
+![ForTheBadge built-by-developers](http://ForTheBadge.com/images/badges/built-by-developers.svg)
+![ForTheBadge built-with-science](http://ForTheBadge.com/images/badges/built-with-science.svg)
+![ForTheBadge powered-by-electricity](http://ForTheBadge.com/images/badges/powered-by-electricity.svg)
+![ForTheBadge made-with-crayons](https://forthebadge.com/images/badges/made-with-crayons.svg)
+![ForTheBadge uses-badges](http://ForTheBadge.com/images/badges/uses-badges.svg)
+
+Sauvignon is a tree walking interpreter written in Rust.
 
 ## Building
 
