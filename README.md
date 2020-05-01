@@ -2,8 +2,8 @@ Sauvignon
 =========
 
 ![CI lint & build](https://github.com/nankeen/sauvignon/workflows/CI/badge.svg)
-![GitHub last commit](https://img.shields.io/github/last-commit/nankeen/sauvignon)
-![GitHub](https://img.shields.io/github/license/nankeen/sauvignon)
+![GitHub last commit](https://img.shields.io/github/last-commit/nankeen/sauvignon?style=flat-square)
+![GitHub](https://img.shields.io/github/license/nankeen/sauvignon?style=flat-square)
 ![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/nankeen/sauvignon)
 
 ![ForTheBadge powered-by-electricity](http://ForTheBadge.com/images/badges/powered-by-electricity.svg)
