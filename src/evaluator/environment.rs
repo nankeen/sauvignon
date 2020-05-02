@@ -1,4 +1,4 @@
-use super::Object;
+use super::{builtins, Object};
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
@@ -11,8 +11,11 @@ pub struct Environment {
 
 impl Environment {
     pub fn new() -> Environment {
+        let mut store = HashMap::new();
+        Self::populate_with_builtins(&mut store);
+
         Environment {
-            store: HashMap::new(),
+            store,
             parent: None,
         }
     }
@@ -35,5 +38,11 @@ impl Environment {
 
     pub fn set(&mut self, name: &str, obj: &Object) {
         self.store.insert(name.to_string(), obj.clone());
+    }
+
+    fn populate_with_builtins(store: &mut HashMap<String, Object>) {
+        for (name, func) in builtins::get_builtins() {
+            store.insert(name, func);
+        }
     }
 }

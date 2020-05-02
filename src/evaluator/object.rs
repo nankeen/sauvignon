@@ -9,6 +9,9 @@ pub enum Object {
     Boolean(bool),
     ReturnValue(Box<Object>),
     Function(Vec<Token>, BlockStatement, Rc<RefCell<Environment>>),
+    Builtin(BuiltinFunction),
     String(String),
     Null,
 }
+
+pub type BuiltinFunction = fn(Vec<Object>) -> Result<Object, String>;
