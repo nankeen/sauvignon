@@ -1,3 +1,4 @@
+mod builtins;
 mod environment;
 mod object;
 use crate::ast::{Expression, Statement};
@@ -101,11 +102,24 @@ impl Evaluator {
             Object::Function(parameters, body, f_env) => {
                 self.eval_fn_call(args, &parameters, &body, f_env)
             }
+            Object::Builtin(func) => self.eval_builtincall(args, func),
             _ => Err(format!(
                 "expected function type for call, got {:?} instead",
                 func_obj
             )),
         }
+    }
+
+    fn eval_builtincall(
+        &mut self,
+        args: &[Expression],
+        func: BuiltinFunction,
+    ) -> Result<Object, String> {
+        let args_objs = args
+            .iter()
+            .map(|expr| self.eval_expression(expr).unwrap())
+            .collect::<Vec<_>>();
+        func(args_objs)
     }
 
     fn eval_fn_call(
@@ -389,5 +403,11 @@ mod tests {
         ",
             Object::Integer(3),
         );
+    }
+
+    #[test]
+    fn test_eval_builtinfunctions() {
+        eval_compare("len(\"test\")", Object::Integer(4));
+        eval_compare("len(\"\")", Object::Integer(0));
     }
 }
