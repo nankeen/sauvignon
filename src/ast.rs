@@ -13,6 +13,7 @@ pub enum Expression {
     IntLiteral(i64),
     BoolLiteral(bool),
     StringLiteral(String),
+    ArrayLiteral(Vec<Expression>),
     PrefixExpression {
         operator: Token,
         right: Box<Expression>,

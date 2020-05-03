@@ -108,6 +108,7 @@ impl<'a> Parser<'a> {
             Token::LParen => self.parse_grouped_expr(),
             Token::If => self.parse_if_expr(),
             Token::Function => self.parse_fn_expr(),
+            Token::LBracket => self.parse_array_expr(),
             _ => Err(format!("unexpected token {:?} in expression", self.cursor)),
         }?;
 
@@ -230,34 +231,39 @@ impl<'a> Parser<'a> {
         Ok(params)
     }
 
-    fn parse_call_expr(&mut self, func: Expression) -> Result<Expression, String> {
-        self.next_token();
-        let arguments = self.parse_call_args()?;
-        Ok(Expression::Call {
-            function: Box::new(func),
-            arguments,
-        })
+    fn parse_array_expr(&mut self) -> Result<Expression, String> {
+        Ok(Expression::ArrayLiteral(
+            self.parse_expr_list(Token::RBracket)?,
+        ))
     }
 
-    fn parse_call_args(&mut self) -> Result<Vec<Expression>, String> {
-        let mut params = Vec::new();
-        if let Some(Token::RParen) = self.lexer.peek() {
+    fn parse_expr_list(&mut self, end: Token) -> Result<Vec<Expression>, String> {
+        let mut list = Vec::new();
+        if Some(&end) == self.lexer.peek() {
             self.next_token();
-            return Ok(params);
+            return Ok(list);
         };
 
         self.next_token();
-
-        params.push(self.parse_expression(Precedence::Lowest)?);
+        list.push(self.parse_expression(Precedence::Lowest)?);
 
         while let Some(Token::Comma) = self.lexer.peek() {
             self.next_token();
             self.next_token();
-            params.push(self.parse_expression(Precedence::Lowest)?);
+            list.push(self.parse_expression(Precedence::Lowest)?);
         }
-        self.expect_token(Token::RParen)?;
+        self.expect_token(end)?;
 
-        Ok(params)
+        Ok(list)
+    }
+
+    fn parse_call_expr(&mut self, func: Expression) -> Result<Expression, String> {
+        self.next_token();
+        let arguments = self.parse_expr_list(Token::RParen)?;
+        Ok(Expression::Call {
+            function: Box::new(func),
+            arguments,
+        })
     }
 }
 
@@ -417,6 +423,31 @@ mod tests {
 
         let tests = [Statement::ExpressionStatement(Expression::StringLiteral(
             "cheesecake".to_string(),
+        ))];
+
+        for test in &tests {
+            match statements.next() {
+                Some(tok) => assert_eq!(*test, *tok),
+                None => panic!("unexpected parser error: returned None"),
+            };
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn test_array_expr() -> Result<(), String> {
+        let input = "[123, \"helo\"]";
+        let lexer = Lexer::new(input);
+        let mut parser = Parser::new(lexer);
+
+        let program = parser.parse_program()?;
+        let mut statements = program.iter();
+
+        let tests = [Statement::ExpressionStatement(Expression::ArrayLiteral(
+            vec![
+                Expression::IntLiteral(123),
+                Expression::StringLiteral("helo".to_string()),
+            ],
         ))];
 
         for test in &tests {
