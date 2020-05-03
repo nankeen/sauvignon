@@ -1,4 +1,4 @@
-#[derive(PartialEq, Clone, Debug)]
+#[derive(PartialEq, Clone, Debug, Eq)]
 pub enum Token {
     Illegal,
     EOF,
@@ -28,6 +28,7 @@ pub enum Token {
     // Delimiters
     Comma,
     Semicolon,
+    Colon,
     LParen,
     RParen,
     LBrace,
@@ -164,6 +165,7 @@ impl<'a> Iterator for Lexer<'a> {
             Some(']') => Some(Token::RBracket),
             Some(',') => Some(Token::Comma),
             Some(';') => Some(Token::Semicolon),
+            Some(':') => Some(Token::Colon),
             Some('"') => {
                 let literal = self.read_string();
                 return Some(Token::StringLiteral(literal));
@@ -210,7 +212,8 @@ mod tests {
         10 == 10;
         10 != 9;
         \"cheesecake\"
-        [32, 64]
+        [32, 64];
+        {\"cheese\": \"cake\"}
         ";
 
         let tests = [
@@ -293,6 +296,12 @@ mod tests {
             Token::Comma,
             Token::IntLiteral(64),
             Token::RBracket,
+            Token::Semicolon,
+            Token::LBrace,
+            Token::StringLiteral("cheese".to_string()),
+            Token::Colon,
+            Token::StringLiteral("cake".to_string()),
+            Token::RBrace,
             Token::EOF,
         ];
 
