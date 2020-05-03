@@ -32,6 +32,8 @@ pub enum Token {
     RParen,
     LBrace,
     RBrace,
+    LBracket,
+    RBracket,
 
     // Keywords
     Function,
@@ -158,6 +160,8 @@ impl<'a> Iterator for Lexer<'a> {
             Some('}') => Some(Token::RBrace),
             Some('(') => Some(Token::LParen),
             Some(')') => Some(Token::RParen),
+            Some('[') => Some(Token::LBracket),
+            Some(']') => Some(Token::RBracket),
             Some(',') => Some(Token::Comma),
             Some(';') => Some(Token::Semicolon),
             Some('"') => {
@@ -206,6 +210,7 @@ mod tests {
         10 == 10;
         10 != 9;
         \"cheesecake\"
+        [32, 64]
         ";
 
         let tests = [
@@ -283,6 +288,11 @@ mod tests {
             Token::IntLiteral(9),
             Token::Semicolon,
             Token::StringLiteral("cheesecake".to_string()),
+            Token::LBracket,
+            Token::IntLiteral(32),
+            Token::Comma,
+            Token::IntLiteral(64),
+            Token::RBracket,
             Token::EOF,
         ];
 

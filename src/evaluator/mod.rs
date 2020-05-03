@@ -93,6 +93,7 @@ impl Evaluator {
                 arguments,
             } => self.eval_call(function, &arguments),
             Expression::Ident(id) => self.eval_identifier(id),
+            Expression::ArrayLiteral(_) => Err("".to_string()),
         }
     }
 
@@ -343,7 +344,7 @@ mod tests {
     }
 
     #[test]
-    fn test_function() {
+    fn test_eval_function() {
         let input = "fn(x) { x + 2; };";
         let lexer = Lexer::new(input);
         let mut parser = Parser::new(lexer);
