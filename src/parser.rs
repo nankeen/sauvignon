@@ -3,18 +3,6 @@ use crate::lexer::{Lexer, Token};
 use std::iter::Peekable;
 use std::mem::discriminant;
 
-#[derive(PartialEq, Eq, PartialOrd, Ord, Debug)]
-enum Precedence {
-    Lowest,
-    Equality,
-    Comparison,
-    Sum,
-    Product,
-    Prefix,
-    Call,
-    Index,
-}
-
 pub struct Parser<'a> {
     lexer: Peekable<Lexer<'a>>,
     cursor: Token,
@@ -110,6 +98,7 @@ impl<'a> Parser<'a> {
             Token::If => self.parse_if_expr(),
             Token::Function => self.parse_fn_expr(),
             Token::LBracket => self.parse_array_expr(),
+            Token::LBrace => self.parse_hash_expr(),
             _ => Err(format!("unexpected token {:?} in expression", self.cursor)),
         }?;
 
@@ -238,6 +227,34 @@ impl<'a> Parser<'a> {
         Ok(Expression::ArrayLiteral(
             self.parse_expr_list(Token::RBracket)?,
         ))
+    }
+
+    fn parse_hash_expr(&mut self) -> Result<Expression, String> {
+        let mut hash = Vec::new();
+        if Some(&Token::RBrace) == self.lexer.peek() {
+            self.next_token();
+            return Ok(Expression::HashLiteral(hash));
+        }
+
+        self.next_token();
+        let key = self.parse_expression(Precedence::Lowest)?;
+        self.expect_token(Token::Colon)?;
+        self.next_token();
+        let val = self.parse_expression(Precedence::Lowest)?;
+        hash.push((key, val));
+
+        while let Some(Token::Comma) = self.lexer.peek() {
+            self.next_token();
+            self.next_token();
+            let key = self.parse_expression(Precedence::Lowest)?;
+            self.expect_token(Token::Colon)?;
+            self.next_token();
+            let val = self.parse_expression(Precedence::Lowest)?;
+            hash.push((key, val));
+        }
+        self.expect_token(Token::RBrace)?;
+
+        Ok(Expression::HashLiteral(hash))
     }
 
     fn parse_expr_list(&mut self, end: Token) -> Result<Vec<Expression>, String> {
@@ -757,6 +774,38 @@ mod tests {
                 }),
             }),
             Statement::ExpressionStatement(Expression::IntLiteral(6)),
+        ];
+
+        for test in &tests {
+            match statements.next() {
+                Some(tok) => assert_eq!(*test, *tok),
+                None => panic!("unexpected parser error: returned None"),
+            };
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn test_hash_expr() -> Result<(), String> {
+        let input = "{\"alfred\": 2, \"cheese\": 4}; {}";
+        let lexer = Lexer::new(input);
+        let mut parser = Parser::new(lexer);
+
+        let program = parser.parse_program()?;
+        let mut statements = program.iter();
+
+        let tests = [
+            Statement::ExpressionStatement(Expression::HashLiteral(vec![
+                (
+                    Expression::StringLiteral("alfred".to_string()),
+                    Expression::IntLiteral(2),
+                ),
+                (
+                    Expression::StringLiteral("cheese".to_string()),
+                    Expression::IntLiteral(4),
+                ),
+            ])),
+            Statement::ExpressionStatement(Expression::HashLiteral(vec![])),
         ];
 
         for test in &tests {

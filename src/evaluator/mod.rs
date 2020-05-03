@@ -6,6 +6,7 @@ use crate::lexer::Token;
 use environment::*;
 use object::*;
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::rc::Rc;
 
 pub struct Evaluator {
@@ -95,7 +96,18 @@ impl Evaluator {
             } => self.eval_call(function, &arguments),
             Expression::Ident(id) => self.eval_identifier(id),
             Expression::IndexExpression { left, index } => self.eval_index_expr(left, index),
+            Expression::HashLiteral(pairs) => self.eval_hash_expr(pairs),
         }
+    }
+
+    fn eval_hash_expr(&mut self, pairs: &[(Expression, Expression)]) -> Result<Object, String> {
+        let mut hashmap = HashMap::new();
+        for (k_expr, v_expr) in pairs {
+            let k = self.eval_expression(k_expr)?;
+            let v = self.eval_expression(v_expr)?;
+            hashmap.insert(k, v);
+        }
+        Ok(Object::Hash(hashmap))
     }
 
     fn eval_index_expr(
@@ -112,6 +124,7 @@ impl Evaluator {
                 }
                 Ok(elems[*idx as usize].clone())
             }
+            (Object::Hash(hash), idx) => Ok(hash[idx].clone()),
             (_, _) => Err(format!("{:?} cannot be indexed by {:?}", left, index)),
         }
     }
@@ -283,6 +296,7 @@ mod tests {
     use super::{Evaluator, Expression, Object, Statement, Token};
     use crate::lexer::Lexer;
     use crate::parser::Parser;
+    use std::collections::HashMap;
 
     fn eval_compare(input: &str, object: Object) {
         let lexer = Lexer::new(input);
@@ -455,5 +469,24 @@ mod tests {
     fn test_eval_index() {
         eval_compare("[0, 1, 2, 3, 4][1]", Object::Integer(1));
         eval_compare("[0, 1, 2, 3, 4][2+1]", Object::Integer(3));
+    }
+
+    #[test]
+    fn test_eval_hash() {
+        let mut kv_pairs = HashMap::new();
+        kv_pairs.insert(Object::String("hello".to_string()), Object::Integer(2));
+        kv_pairs.insert(
+            Object::String("cheese".to_string()),
+            Object::String("cake".to_string()),
+        );
+        eval_compare(
+            "{\"hello\": 2, \"cheese\": \"cake\"}",
+            Object::Hash(kv_pairs),
+        );
+        // Test hash lookup
+        eval_compare(
+            "{\"hello\": 2, \"cheese\": 4}[\"hello\"]",
+            Object::Integer(2),
+        );
     }
 }
