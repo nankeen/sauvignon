@@ -6,11 +6,8 @@ Sauvignon
 ![GitHub](https://img.shields.io/github/license/nankeen/sauvignon)
 ![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/nankeen/sauvignon)
 
-![ForTheBadge built-by-developers](http://ForTheBadge.com/images/badges/built-by-developers.svg)
-![ForTheBadge built-with-science](http://ForTheBadge.com/images/badges/built-with-science.svg)
 ![ForTheBadge powered-by-electricity](http://ForTheBadge.com/images/badges/powered-by-electricity.svg)
 ![ForTheBadge made-with-crayons](https://forthebadge.com/images/badges/made-with-crayons.svg)
-![ForTheBadge uses-badges](http://ForTheBadge.com/images/badges/uses-badges.svg)
 
 Sauvignon is a tree walking interpreter written in Rust.
 
@@ -110,6 +107,6 @@ String concatenation works using the `+` infix operator.
 - [x] Parser
 - [x] Internal object system
 - [x] Evaluator
-- [ ] Built-in functions
-- [ ] Arrays
-- [ ] Hash maps
+- [x] Built-in functions
+- [x] Arrays
+- [x] Hash maps
