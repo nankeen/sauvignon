@@ -65,6 +65,7 @@ impl Evaluator {
             Expression::IntLiteral(i) => Ok(Object::Integer(*i)),
             Expression::BoolLiteral(b) => Ok(Object::Boolean(*b)),
             Expression::StringLiteral(s) => Ok(Object::String(s.clone())),
+            Expression::ArrayLiteral(elems) => self.eval_array_expr(elems),
             Expression::PrefixExpression { right, operator } => {
                 let eval_r = self.eval_expression(right)?;
                 self.eval_prefix_expr(operator, &eval_r)
@@ -93,8 +94,34 @@ impl Evaluator {
                 arguments,
             } => self.eval_call(function, &arguments),
             Expression::Ident(id) => self.eval_identifier(id),
-            Expression::ArrayLiteral(_) => Err("".to_string()),
+            Expression::IndexExpression { left, index } => self.eval_index_expr(left, index),
         }
+    }
+
+    fn eval_index_expr(
+        &mut self,
+        left_expr: &Expression,
+        index_expr: &Expression,
+    ) -> Result<Object, String> {
+        let left = self.eval_expression(left_expr)?;
+        let index = self.eval_expression(index_expr)?;
+        match (&left, &index) {
+            (Object::Array(elems), Object::Integer(idx)) => {
+                if *idx < 0 || *idx as usize > elems.len() - 1 {
+                    return Ok(Object::Null);
+                }
+                Ok(elems[*idx as usize].clone())
+            }
+            (_, _) => Err(format!("{:?} cannot be indexed by {:?}", left, index)),
+        }
+    }
+
+    fn eval_array_expr(&mut self, elems_expr: &[Expression]) -> Result<Object, String> {
+        let elems = elems_expr
+            .iter()
+            .map(|expr| self.eval_expression(expr).unwrap())
+            .collect::<Vec<_>>();
+        Ok(Object::Array(elems))
     }
 
     fn eval_call(&mut self, func: &Expression, args: &[Expression]) -> Result<Object, String> {
@@ -410,5 +437,23 @@ mod tests {
     fn test_eval_builtinfunctions() {
         eval_compare("len(\"test\")", Object::Integer(4));
         eval_compare("len(\"\")", Object::Integer(0));
+    }
+
+    #[test]
+    fn test_eval_array() {
+        eval_compare(
+            "[1, 2 * 2, 3 + 3]",
+            Object::Array(vec![
+                Object::Integer(1),
+                Object::Integer(4),
+                Object::Integer(6),
+            ]),
+        )
+    }
+
+    #[test]
+    fn test_eval_index() {
+        eval_compare("[0, 1, 2, 3, 4][1]", Object::Integer(1));
+        eval_compare("[0, 1, 2, 3, 4][2+1]", Object::Integer(3));
     }
 }

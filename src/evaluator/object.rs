@@ -7,6 +7,7 @@ use std::rc::Rc;
 pub enum Object {
     Integer(i64),
     Boolean(bool),
+    Array(Vec<Object>),
     ReturnValue(Box<Object>),
     Function(Vec<Token>, BlockStatement, Rc<RefCell<Environment>>),
     Builtin(BuiltinFunction),

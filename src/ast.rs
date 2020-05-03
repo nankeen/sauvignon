@@ -36,6 +36,10 @@ pub enum Expression {
         function: Box<Expression>,
         arguments: Vec<Expression>,
     },
+    IndexExpression {
+        left: Box<Expression>,
+        index: Box<Expression>,
+    },
 }
 
 pub type Program = BlockStatement;

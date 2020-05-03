@@ -3,7 +3,7 @@ use crate::lexer::{Lexer, Token};
 use std::iter::Peekable;
 use std::mem::discriminant;
 
-#[derive(PartialEq, Eq, PartialOrd, Ord)]
+#[derive(PartialEq, Eq, PartialOrd, Ord, Debug)]
 enum Precedence {
     Lowest,
     Equality,
@@ -12,6 +12,7 @@ enum Precedence {
     Product,
     Prefix,
     Call,
+    Index,
 }
 
 pub struct Parser<'a> {
@@ -124,6 +125,7 @@ impl<'a> Parser<'a> {
                 Some(Token::LessThan) => self.parse_infix_expr(left)?,
                 Some(Token::GreaterThan) => self.parse_infix_expr(left)?,
                 Some(Token::LParen) => self.parse_call_expr(left)?,
+                Some(Token::LBracket) => self.parse_index_expr(left)?,
                 _ => break,
             };
         }
@@ -153,6 +155,7 @@ impl<'a> Parser<'a> {
             Token::Slash => Precedence::Product,
             Token::Asterisk => Precedence::Product,
             Token::LParen => Precedence::Call,
+            Token::LBracket => Precedence::Index,
             _ => Precedence::Lowest,
         }
     }
@@ -258,11 +261,22 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_call_expr(&mut self, func: Expression) -> Result<Expression, String> {
-        self.next_token();
+        self.expect_token(Token::LParen)?;
         let arguments = self.parse_expr_list(Token::RParen)?;
         Ok(Expression::Call {
             function: Box::new(func),
             arguments,
+        })
+    }
+
+    fn parse_index_expr(&mut self, left: Expression) -> Result<Expression, String> {
+        self.expect_token(Token::LBracket)?;
+        self.next_token();
+        let index = self.parse_expression(Precedence::Lowest)?;
+        self.expect_token(Token::RBracket)?;
+        Ok(Expression::IndexExpression {
+            left: Box::new(left),
+            index: Box::new(index),
         })
     }
 }
@@ -714,6 +728,36 @@ mod tests {
                 },
             ],
         })];
+
+        for test in &tests {
+            match statements.next() {
+                Some(tok) => assert_eq!(*test, *tok),
+                None => panic!("unexpected parser error: returned None"),
+            };
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn test_index_expr() -> Result<(), String> {
+        let input = "add[5+3]; 6";
+        let lexer = Lexer::new(input);
+        let mut parser = Parser::new(lexer);
+
+        let program = parser.parse_program()?;
+        let mut statements = program.iter();
+
+        let tests = [
+            Statement::ExpressionStatement(Expression::IndexExpression {
+                left: Box::new(Expression::Ident("add".to_string())),
+                index: Box::new(Expression::InfixExpression {
+                    left: Box::new(Expression::IntLiteral(5)),
+                    operator: Token::Plus,
+                    right: Box::new(Expression::IntLiteral(3)),
+                }),
+            }),
+            Statement::ExpressionStatement(Expression::IntLiteral(6)),
+        ];
 
         for test in &tests {
             match statements.next() {
