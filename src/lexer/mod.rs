@@ -175,7 +175,10 @@ mod tests {
 
         10 當同 10;
         10 不是 9;
-        \"cheesecake\"";
+        \"cheesecake\"
+        [32, 64];
+        始\"cheese\": \"cake\"終
+        ";
 
         let tests = [
             Token::Let,

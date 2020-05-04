@@ -475,12 +475,12 @@ mod tests {
     #[test]
     fn test_eval_recursion() {
         eval_compare(
-            "let fib = fn(n) {
-            if (n < 3) {
-                return 1;
-            }
-            return fib(n-1) + fib(n-2);
-        };
+            "讓 fib 當 功能(n) 始
+            如 (n 少於 3) 始
+                歸 1;
+            終
+            歸 fib(n-1) + fib(n-2);
+        終;
         fib(4);
         ",
             Object::Integer(3),
@@ -520,12 +520,12 @@ mod tests {
             Object::String("cake".to_string()),
         );
         eval_compare(
-            "{\"hello\": 2, \"cheese\": \"cake\"}",
+            "始\"hello\": 2, \"cheese\": \"cake\"終",
             Object::Hash(kv_pairs),
         );
         // Test hash lookup
         eval_compare(
-            "{\"hello\": 2, \"cheese\": 4}[\"hello\"]",
+            "始\"hello\": 2, \"cheese\": 4終[\"hello\"]",
             Object::Integer(2),
         );
     }

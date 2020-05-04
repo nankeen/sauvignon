@@ -779,7 +779,7 @@ mod tests {
 
     #[test]
     fn test_hash_expr() -> Result<(), String> {
-        let input = "{\"alfred\": 2, \"cheese\": 4}; {}";
+        let input = "始\"alfred\": 2, \"cheese\": 4終; 始終";
         let lexer = Lexer::new(input);
         let mut parser = Parser::new(lexer);
 
