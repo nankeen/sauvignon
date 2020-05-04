@@ -1,6 +1,6 @@
 #![allow(clippy::derive_hash_xor_eq)]
 use super::{Environment, Token};
-use crate::ast::BlockStatement;
+use crate::parser::BlockStatement;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::hash::{Hash, Hasher};

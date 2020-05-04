@@ -1,5 +1,6 @@
-use crate::ast::*;
+mod ast;
 use crate::lexer::{Lexer, Token};
+pub use ast::*;
 use std::iter::Peekable;
 use std::mem::discriminant;
 
@@ -300,8 +301,8 @@ impl<'a> Parser<'a> {
 
 #[cfg(test)]
 mod tests {
+    use super::ast::{Expression, Statement};
     use super::{Lexer, Parser, Token};
-    use crate::ast::{Expression, Statement};
 
     #[test]
     fn test_let_statements() -> Result<(), String> {

@@ -1,8 +1,8 @@
 mod builtins;
 mod environment;
 mod object;
-use crate::ast::{Expression, Statement};
 use crate::lexer::Token;
+use crate::parser::{Expression, Statement};
 use environment::*;
 use object::*;
 use std::cell::RefCell;
