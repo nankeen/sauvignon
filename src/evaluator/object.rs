@@ -6,6 +6,7 @@ use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
 use std::rc::Rc;
 
+/// `Object` enum represents an object instance with various types
 #[derive(Debug, PartialEq, Clone, Eq)]
 pub enum Object {
     Integer(i64),
@@ -19,6 +20,7 @@ pub enum Object {
     Null,
 }
 
+/// `BuiltinFunction` type describes the signature all built in functions have
 pub type BuiltinFunction = fn(Vec<Object>) -> Result<Object, String>;
 
 impl Hash for Object {

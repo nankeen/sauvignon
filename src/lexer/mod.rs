@@ -1,6 +1,7 @@
 mod token;
 pub use token::Token;
 
+/// Lexer manages the state and tokenization of input
 #[derive(Clone, Debug)]
 pub struct Lexer<'a> {
     input: std::iter::Peekable<std::str::Chars<'a>>,
@@ -8,6 +9,10 @@ pub struct Lexer<'a> {
 }
 
 impl<'a> Lexer<'a> {
+    /// New `Lexer` with a given input
+    ///
+    /// # Arguments
+    /// * `input` - String containing the program to be parsed
     pub fn new(input: &'a str) -> Lexer<'a> {
         let mut lexer = Lexer {
             input: input.chars().peekable(),

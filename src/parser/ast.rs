@@ -1,5 +1,7 @@
 use crate::lexer::Token;
 
+/// `Statement` enum describes different types of statements.
+/// Statements do not necessarily yield results
 #[derive(Debug, PartialEq, Clone, Eq)]
 pub enum Statement {
     LetStatement { ident: Token, expr: Expression },
@@ -7,6 +9,8 @@ pub enum Statement {
     ExpressionStatement(Expression),
 }
 
+/// `Expression` enum describes different types of expressions.
+/// Expressions will result in an object.
 #[derive(Debug, PartialEq, Clone, Eq)]
 pub enum Expression {
     Ident(String),
@@ -43,10 +47,13 @@ pub enum Expression {
     },
 }
 
+/// `Program` contains all of the statements
 pub type Program = BlockStatement;
 
+/// `BlockStatement` contains parts of the program, e.g. in an if-block
 pub type BlockStatement = Vec<Statement>;
 
+/// Precedence describes the order which expressions must be parsed
 #[derive(PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub enum Precedence {
     Lowest,

@@ -14,12 +14,19 @@ pub struct Evaluator {
 }
 
 impl Evaluator {
+    /// Creates a new evaluator with a fresh environment
     pub fn new() -> Evaluator {
         Evaluator {
             env: Rc::new(RefCell::new(Environment::new())),
         }
     }
 
+    /// Evaluates a `Program`, returns the result of the last statement.
+    /// This functions unwraps `Object::ReturnValue`.
+    ///
+    /// # Arguments
+    ///
+    /// * `program` - Program to be evaluated
     pub fn eval_program(&mut self, program: &[Statement]) -> Result<Object, String> {
         let mut result = Object::Null;
         for stmt in program {
@@ -31,6 +38,12 @@ impl Evaluator {
         Ok(result)
     }
 
+    /// Evaluates a `BlockStatement`, returns the result of the last statement.
+    /// This functions does not unwrap `Object::ReturnValue`.
+    ///
+    /// # Arguments
+    ///
+    /// * `blockstmt` - BlockStatement to be evaluated
     fn eval_blockstatement(&mut self, blockstmt: &[Statement]) -> Result<Object, String> {
         let mut result = Object::Null;
         for stmt in blockstmt {
@@ -42,6 +55,11 @@ impl Evaluator {
         Ok(result)
     }
 
+    /// Evaluates a single `Statement`
+    ///
+    /// # Arguments
+    ///
+    /// * `stmt` - Statement to be evaluated
     fn eval_statement(&mut self, stmt: &Statement) -> Result<Object, String> {
         match stmt {
             Statement::ExpressionStatement(expr) => self.eval_expression(expr),
@@ -61,6 +79,11 @@ impl Evaluator {
         }
     }
 
+    /// Evaluates an `Expression`
+    ///
+    /// # Arguments
+    ///
+    /// * `expr` - Expression to be evaluated
     fn eval_expression(&mut self, expr: &Expression) -> Result<Object, String> {
         match expr {
             Expression::IntLiteral(i) => Ok(Object::Integer(*i)),
@@ -100,6 +123,11 @@ impl Evaluator {
         }
     }
 
+    /// Evaluates hash expressions
+    ///
+    /// # Arguments
+    ///
+    /// * `pairs` - Vector of key value pairs (Expression, Expression):w
     fn eval_hash_expr(&mut self, pairs: &[(Expression, Expression)]) -> Result<Object, String> {
         let mut hashmap = HashMap::new();
         for (k_expr, v_expr) in pairs {
@@ -110,6 +138,12 @@ impl Evaluator {
         Ok(Object::Hash(hashmap))
     }
 
+    /// Evaluates an index expression used by arrays and hashes
+    ///
+    /// # Arguments
+    ///
+    /// * `left_expr` - Expression to the left of `[...`
+    /// * `index_expr` - Expression within the `[...]` brackets
     fn eval_index_expr(
         &mut self,
         left_expr: &Expression,

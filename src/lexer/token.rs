@@ -1,3 +1,4 @@
+/// `Token` enum represents the tokens returned by the lexer
 #[derive(PartialEq, Clone, Debug, Eq)]
 pub enum Token {
     Illegal,

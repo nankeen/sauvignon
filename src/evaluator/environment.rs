@@ -3,6 +3,7 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 
+/// Environment contains objects in scope
 #[derive(PartialEq, Debug, Clone, Eq)]
 pub struct Environment {
     store: HashMap<String, Object>,
@@ -10,6 +11,7 @@ pub struct Environment {
 }
 
 impl Environment {
+    /// Creates a new environment without a parent
     pub fn new() -> Environment {
         let mut store = HashMap::new();
         Self::populate_with_builtins(&mut store);
@@ -20,12 +22,22 @@ impl Environment {
         }
     }
 
+    /// Creates a new environment given a parent
+    ///
+    /// # Arguments
+    ///
+    /// * `outer` - Parent environment
     pub fn new_enclosed(outer: Rc<RefCell<Environment>>) -> Environment {
         let mut env = Environment::new();
         env.parent = Some(outer);
         env
     }
 
+    /// Returns the associated object within scope
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - Name string of the object
     pub fn get(&self, name: &str) -> Option<Object> {
         match self.store.get(name) {
             Some(obj) => Some(obj.clone()),
@@ -36,10 +48,16 @@ impl Environment {
         }
     }
 
+    /// Sets the associated object within scope
     pub fn set(&mut self, name: &str, obj: &Object) {
         self.store.insert(name.to_string(), obj.clone());
     }
 
+    /// Fills a given hash map with built in functions
+    ///
+    /// # Arguments
+    ///
+    /// * `store` - Hash map to store the objects
     fn populate_with_builtins(store: &mut HashMap<String, Object>) {
         for (name, func) in builtins::get_builtins() {
             store.insert(name, func);

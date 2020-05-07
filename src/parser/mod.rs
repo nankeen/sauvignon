@@ -4,12 +4,17 @@ pub use ast::*;
 use std::iter::Peekable;
 use std::mem::discriminant;
 
+/// Parser manage states and construction of the AST
 pub struct Parser<'a> {
     lexer: Peekable<Lexer<'a>>,
     cursor: Token,
 }
 
 impl<'a> Parser<'a> {
+    /// New `Parser` with a given lexer
+    ///
+    /// # Arguments
+    /// * `lexer` - Lexer to derive the tokens from
     pub fn new(mut lexer: Lexer<'a>) -> Parser<'a> {
         let tok = lexer.next().unwrap();
         Parser {
@@ -18,6 +23,7 @@ impl<'a> Parser<'a> {
         }
     }
 
+    /// Retuns the parsed program in an AST
     pub fn parse_program(&mut self) -> Result<Program, String> {
         let mut program: Program = Vec::new();
         while self.cursor != Token::EOF {

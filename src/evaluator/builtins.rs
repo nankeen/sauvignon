@@ -1,13 +1,16 @@
 use super::{BuiltinFunction, Object};
 
+/// Returns an array of `(String, Object)` pairs indication function name and function object
 pub fn get_builtins() -> Vec<(String, Object)> {
     vec![new_builtin("len", funcs::len)]
 }
 
+/// Helper function to create tuple pair of `(String, Object)`
 fn new_builtin(name: &str, func: BuiltinFunction) -> (String, Object) {
     (name.to_string(), Object::Builtin(func))
 }
 
+/// Module containing built in functions
 mod funcs {
     use super::Object;
 
