@@ -25,7 +25,7 @@ impl<'a> Parser<'a> {
 
     /// Retuns the parsed program in an AST
     pub fn parse_program(&mut self) -> Result<Program, String> {
-        let mut program: Program = Vec::new();
+        let mut program: Program = Program(Vec::new());
         while self.cursor != Token::EOF {
             let statement = self.parse_statement()?;
             program.push(statement);
@@ -50,29 +50,35 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_statement(&mut self) -> Result<Statement, String> {
-        match self.cursor {
+        let statement = match self.cursor {
             Token::Let => self.parse_let_statement(),
             Token::Return => self.parse_return_statement(),
+            Token::Import => self.parse_import_statement(),
             _ => self.parse_expression_statement(),
+        };
+
+        if let Some(Token::Semicolon) = self.lexer.peek() {
+            self.next_token();
         }
+        statement
     }
 
     fn parse_return_statement(&mut self) -> Result<Statement, String> {
         self.next_token();
 
         let expr = self.parse_expression(Precedence::Lowest)?;
-        if let Some(Token::Semicolon) = self.lexer.peek() {
-            self.next_token();
-        }
         Ok(Statement::ReturnStatement(expr))
+    }
+
+    fn parse_import_statement(&mut self) -> Result<Statement, String> {
+        self.expect_token(Token::Ident("".to_string()))?;
+        let ident = self.cursor.clone();
+        Ok(Statement::ImportStatement { ident })
     }
 
     fn parse_expression_statement(&mut self) -> Result<Statement, String> {
         let expr = self.parse_expression(Precedence::Lowest)?;
 
-        if let Some(Token::Semicolon) = self.lexer.peek() {
-            self.next_token();
-        }
         Ok(Statement::ExpressionStatement(expr))
     }
 
@@ -162,9 +168,6 @@ impl<'a> Parser<'a> {
         self.expect_token(Token::Assign)?;
         self.next_token();
         let expr = self.parse_expression(Precedence::Lowest)?;
-        if let Some(Token::Semicolon) = self.lexer.peek() {
-            self.next_token();
-        }
         Ok(Statement::LetStatement { ident, expr })
     }
 
@@ -345,6 +348,28 @@ mod tests {
         for test in tests {
             match statements.next() {
                 Some(tok) => assert_eq!(test, tok),
+                None => panic!("unexpected parser error: returned None"),
+            };
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn test_import_statement() -> Result<(), String> {
+        let input = "import test_mod;";
+        let lexer = Lexer::new(input);
+        let mut parser = Parser::new(lexer);
+
+        let program = parser.parse_program()?;
+        let mut statements = program.iter();
+
+        let tests = [Statement::ImportStatement {
+            ident: Token::Ident("test_mod".to_string()),
+        }];
+
+        for test in &tests {
+            match statements.next() {
+                Some(tok) => assert_eq!(*test, *tok),
                 None => panic!("unexpected parser error: returned None"),
             };
         }
@@ -783,7 +808,7 @@ mod tests {
         let lexer = Lexer::new(input);
         let mut parser = Parser::new(lexer);
 
-        let mut statements = parser.parse_program()?.into_iter();
+        let mut statements = parser.parse_program()?.0.into_iter();
 
         let tests = [
             Statement::ExpressionStatement(Expression::HashLiteral(vec![

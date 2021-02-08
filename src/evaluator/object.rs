@@ -1,5 +1,5 @@
 #![allow(clippy::derive_hash_xor_eq)]
-use super::{Environment, Token};
+use super::{Environment, EvalError, Module, Token};
 use crate::parser::BlockStatement;
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -17,11 +17,12 @@ pub enum Object {
     Builtin(BuiltinFunction),
     String(String),
     Hash(HashMap<Object, Object>),
+    Module(Module),
     Null,
 }
 
 /// `BuiltinFunction` type describes the signature all built in functions have
-pub type BuiltinFunction = fn(Vec<Object>) -> Result<Object, String>;
+pub type BuiltinFunction = fn(Vec<Object>) -> Result<Object, EvalError>;
 
 impl Hash for Object {
     fn hash<H: Hasher>(&self, state: &mut H) {

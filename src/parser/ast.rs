@@ -1,4 +1,6 @@
-use crate::lexer::Token;
+use super::Parser;
+use crate::lexer::{Lexer, Token};
+use std::str::FromStr;
 
 /// `Statement` enum describes different types of statements.
 /// Statements do not necessarily yield results
@@ -7,6 +9,7 @@ pub enum Statement {
     LetStatement { ident: Token, expr: Expression },
     ReturnStatement(Expression),
     ExpressionStatement(Expression),
+    ImportStatement { ident: Token },
 }
 
 /// `Expression` enum describes different types of expressions.
@@ -48,7 +51,7 @@ pub enum Expression {
 }
 
 /// `Program` contains all of the statements
-pub type Program = BlockStatement;
+pub struct Program(pub BlockStatement);
 
 /// `BlockStatement` contains parts of the program, e.g. in an if-block
 pub type BlockStatement = Vec<Statement>;
@@ -64,4 +67,28 @@ pub enum Precedence {
     Prefix,
     Call,
     Index,
+}
+
+impl FromStr for Program {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let lexer = Lexer::new(s);
+        let mut parser = Parser::new(lexer);
+        parser.parse_program()
+    }
+}
+
+impl std::ops::Deref for Program {
+    type Target = BlockStatement;
+
+    fn deref(&self) -> &BlockStatement {
+        &self.0
+    }
+}
+
+impl std::ops::DerefMut for Program {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
 }

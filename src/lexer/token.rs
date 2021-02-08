@@ -41,4 +41,5 @@ pub enum Token {
     Function,
     Let,
     Return,
+    Import,
 }

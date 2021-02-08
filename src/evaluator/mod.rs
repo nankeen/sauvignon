@@ -1,16 +1,20 @@
 mod builtins;
 mod environment;
+mod failures;
+mod modules;
 mod object;
 use crate::lexer::Token;
 use crate::parser::{Expression, Statement};
 use environment::*;
+use failures::EvalError;
+use modules::Module;
 use object::*;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 
 pub struct Evaluator {
-    env: Rc<RefCell<Environment>>,
+    pub env: Rc<RefCell<Environment>>,
 }
 
 impl Evaluator {
@@ -27,7 +31,7 @@ impl Evaluator {
     /// # Arguments
     ///
     /// * `program` - Program to be evaluated
-    pub fn eval_program(&mut self, program: &[Statement]) -> Result<Object, String> {
+    pub fn eval_program(&mut self, program: &[Statement]) -> Result<Object, EvalError> {
         let mut result = Object::Null;
         for stmt in program {
             result = self.eval_statement(stmt)?;
@@ -44,7 +48,7 @@ impl Evaluator {
     /// # Arguments
     ///
     /// * `blockstmt` - BlockStatement to be evaluated
-    fn eval_blockstatement(&mut self, blockstmt: &[Statement]) -> Result<Object, String> {
+    fn eval_blockstatement(&mut self, blockstmt: &[Statement]) -> Result<Object, EvalError> {
         let mut result = Object::Null;
         for stmt in blockstmt {
             result = self.eval_statement(stmt)?;
@@ -60,7 +64,7 @@ impl Evaluator {
     /// # Arguments
     ///
     /// * `stmt` - Statement to be evaluated
-    fn eval_statement(&mut self, stmt: &Statement) -> Result<Object, String> {
+    fn eval_statement(&mut self, stmt: &Statement) -> Result<Object, EvalError> {
         match stmt {
             Statement::ExpressionStatement(expr) => self.eval_expression(expr),
             Statement::ReturnStatement(expr) => {
@@ -75,7 +79,18 @@ impl Evaluator {
                 self.env.borrow_mut().set(id, &val);
                 Ok(Object::Null)
             }
-            _ => Err("wot".to_string()),
+            Statement::ImportStatement {
+                ident: Token::Ident(mod_id),
+            } => {
+                let saved_env = Rc::clone(&self.env);
+                self.env = Rc::new(RefCell::new(Environment::new()));
+                let module = Module::from_source(self, mod_id)?;
+                self.env = saved_env;
+                self.env.borrow_mut().set(mod_id, &Object::Module(module));
+
+                Ok(Object::Null)
+            }
+            _ => Err(EvalError::StatementNotImplemented),
         }
     }
 
@@ -84,7 +99,7 @@ impl Evaluator {
     /// # Arguments
     ///
     /// * `expr` - Expression to be evaluated
-    fn eval_expression(&mut self, expr: &Expression) -> Result<Object, String> {
+    fn eval_expression(&mut self, expr: &Expression) -> Result<Object, EvalError> {
         match expr {
             Expression::IntLiteral(i) => Ok(Object::Integer(*i)),
             Expression::BoolLiteral(b) => Ok(Object::Boolean(*b)),
@@ -128,7 +143,7 @@ impl Evaluator {
     /// # Arguments
     ///
     /// * `pairs` - Vector of key value pairs (Expression, Expression):w
-    fn eval_hash_expr(&mut self, pairs: &[(Expression, Expression)]) -> Result<Object, String> {
+    fn eval_hash_expr(&mut self, pairs: &[(Expression, Expression)]) -> Result<Object, EvalError> {
         let mut hashmap = HashMap::new();
         for (k_expr, v_expr) in pairs {
             let k = self.eval_expression(k_expr)?;
@@ -148,7 +163,7 @@ impl Evaluator {
         &mut self,
         left_expr: &Expression,
         index_expr: &Expression,
-    ) -> Result<Object, String> {
+    ) -> Result<Object, EvalError> {
         let left = self.eval_expression(left_expr)?;
         let index = self.eval_expression(index_expr)?;
         match (&left, &index) {
@@ -159,29 +174,27 @@ impl Evaluator {
                 Ok(elems[*idx as usize].clone())
             }
             (Object::Hash(hash), idx) => Ok(hash[idx].clone()),
-            (_, _) => Err(format!("{:?} cannot be indexed by {:?}", left, index)),
+            (_, _) => Err(EvalError::BadExpectedType(left, index)),
         }
     }
 
-    fn eval_array_expr(&mut self, elems_expr: &[Expression]) -> Result<Object, String> {
-        let elems = elems_expr
+    fn eval_array_expr(&mut self, elems_expr: &[Expression]) -> Result<Object, EvalError> {
+        let elems: Result<Vec<Object>, EvalError> = elems_expr
             .iter()
-            .map(|expr| self.eval_expression(expr).unwrap())
-            .collect::<Vec<_>>();
-        Ok(Object::Array(elems))
+            .map(|expr| self.eval_expression(expr))
+            .collect();
+
+        Ok(Object::Array(elems?))
     }
 
-    fn eval_call(&mut self, func: &Expression, args: &[Expression]) -> Result<Object, String> {
+    fn eval_call(&mut self, func: &Expression, args: &[Expression]) -> Result<Object, EvalError> {
         let func_obj = self.eval_expression(func)?;
         match func_obj {
             Object::Function(parameters, body, f_env) => {
                 self.eval_fn_call(args, &parameters, &body, f_env)
             }
             Object::Builtin(func) => self.eval_builtincall(args, func),
-            _ => Err(format!(
-                "expected function type for call, got {:?} instead",
-                func_obj
-            )),
+            _ => Err(EvalError::BadCallType(func_obj)),
         }
     }
 
@@ -189,7 +202,7 @@ impl Evaluator {
         &mut self,
         args: &[Expression],
         func: BuiltinFunction,
-    ) -> Result<Object, String> {
+    ) -> Result<Object, EvalError> {
         let args_objs = args
             .iter()
             .map(|expr| self.eval_expression(expr).unwrap())
@@ -203,13 +216,9 @@ impl Evaluator {
         params: &[Token],
         body: &[Statement],
         f_env: Rc<RefCell<Environment>>,
-    ) -> Result<Object, String> {
+    ) -> Result<Object, EvalError> {
         if args.len() != params.len() {
-            Err(format!(
-                "expected {:?} arguments, got {:?} instead",
-                args.len(),
-                params.len()
-            ))
+            Err(EvalError::BadArgumentLength(args.len(), params.len()))
         } else {
             let args_objs = args
                 .iter()
@@ -221,9 +230,9 @@ impl Evaluator {
                 match ident {
                     Token::Ident(name) => new_env.set(name, obj),
                     _ => {
-                        return Err(format!(
-                            "expected identifier for parameter got type {:?}",
-                            ident
+                        return Err(EvalError::BadToken(
+                            Token::Ident("".to_string()),
+                            ident.clone(),
                         ))
                     }
                 }
@@ -238,11 +247,11 @@ impl Evaluator {
         }
     }
 
-    fn eval_identifier(&self, id: &str) -> Result<Object, String> {
-        match self.env.borrow().get(id) {
-            Some(obj) => Ok(obj),
-            None => Err(format!("identifier {:?} not found", id)),
-        }
+    fn eval_identifier(&self, id: &str) -> Result<Object, EvalError> {
+        self.env
+            .borrow()
+            .get(id)
+            .ok_or_else(|| EvalError::NotFound(id.to_string()))
     }
 
     fn is_truthy(&self, obj: &Object) -> bool {
@@ -258,7 +267,7 @@ impl Evaluator {
         condition: &Expression,
         consequence: &[Statement],
         alternative: &[Statement],
-    ) -> Result<Object, String> {
+    ) -> Result<Object, EvalError> {
         let cond_eval = self.eval_expression(condition)?;
         if self.is_truthy(&cond_eval) {
             self.eval_blockstatement(consequence)
@@ -267,70 +276,77 @@ impl Evaluator {
         }
     }
 
-    fn eval_infix_expr(&self, op: &Token, left: &Object, right: &Object) -> Result<Object, String> {
+    fn eval_infix_expr(
+        &self,
+        op: &Token,
+        left: &Object,
+        right: &Object,
+    ) -> Result<Object, EvalError> {
         match op {
             Token::Plus => match (left, right) {
                 (Object::Integer(l), Object::Integer(r)) => Ok(Object::Integer(l + r)),
                 (Object::String(l), Object::String(r)) => Ok(Object::String(l.clone() + r)),
-                _ => Err(format!("type mismatch {:?} {:?} {:?}", left, right, op)),
+                _ => Err(EvalError::BadExpectedType(left.clone(), right.clone())),
             },
             Token::Minus => match (left, right) {
                 (Object::Integer(l), Object::Integer(r)) => Ok(Object::Integer(l - r)),
-                _ => Err(format!("type mismatch {:?} {:?} {:?}", left, right, op)),
+                _ => Err(EvalError::BadExpectedType(left.clone(), right.clone())),
             },
             Token::Asterisk => match (left, right) {
                 (Object::Integer(l), Object::Integer(r)) => Ok(Object::Integer(l * r)),
-                _ => Err(format!("type mismatch {:?} {:?} {:?}", left, right, op)),
+                _ => Err(EvalError::BadExpectedType(left.clone(), right.clone())),
             },
             Token::Slash => match (left, right) {
                 (Object::Integer(l), Object::Integer(r)) => Ok(Object::Integer(l / r)),
-                _ => Err(format!("type mismatch {:?} {:?} {:?}", left, right, op)),
+                _ => Err(EvalError::BadExpectedType(left.clone(), right.clone())),
             },
             Token::Equal => Ok(Object::Boolean(left == right)),
             Token::NotEqual => Ok(Object::Boolean(left != right)),
             Token::LessThan => match (left, right) {
                 (Object::Integer(l), Object::Integer(r)) => Ok(Object::Boolean(l < r)),
-                _ => Err(format!("type mismatch {:?} {:?} {:?}", left, right, op)),
+                _ => Err(EvalError::BadExpectedType(left.clone(), right.clone())),
             },
             Token::GreaterThan => match (left, right) {
                 (Object::Integer(l), Object::Integer(r)) => Ok(Object::Boolean(l > r)),
-                _ => Err(format!("type mismatch {:?} {:?} {:?}", left, right, op)),
+                _ => Err(EvalError::BadExpectedType(left.clone(), right.clone())),
             },
-            _ => Err(format!("unknown infix operator {:?}", op)),
+            _ => Err(EvalError::UnknownOperator(op.clone())),
         }
     }
 
-    fn eval_prefix_expr(&self, op: &Token, right: &Object) -> Result<Object, String> {
+    fn eval_prefix_expr(&self, op: &Token, right: &Object) -> Result<Object, EvalError> {
         match op {
             Token::Bang => self.eval_bang_prefix(right),
             Token::Minus => self.eval_minus_prefix(right),
-            _ => Err(format!("unknown infix operator {:?}", op)),
+            _ => Err(EvalError::UnknownOperator(op.clone())),
         }
     }
 
-    fn eval_minus_prefix(&self, right: &Object) -> Result<Object, String> {
+    fn eval_minus_prefix(&self, right: &Object) -> Result<Object, EvalError> {
         match right {
             Object::Integer(i) => Ok(Object::Integer(-i)),
-            _ => Ok(Object::Null),
+            _ => Err(EvalError::BadOperator(Token::Minus, right.clone())),
         }
     }
 
-    fn eval_bang_prefix(&self, right: &Object) -> Result<Object, String> {
+    fn eval_bang_prefix(&self, right: &Object) -> Result<Object, EvalError> {
         match right {
             Object::Boolean(true) => Ok(Object::Boolean(false)),
             Object::Boolean(false) => Ok(Object::Boolean(true)),
             Object::Null => Ok(Object::Boolean(true)),
-            _ => Ok(Object::Boolean(false)),
+            _ => Err(EvalError::BadOperator(Token::Bang, right.clone())),
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{Evaluator, Expression, Object, Statement, Token};
+    use super::{Environment, EvalError, Evaluator, Expression, Module, Object, Statement, Token};
     use crate::lexer::Lexer;
     use crate::parser::Parser;
+    use std::cell::RefCell;
     use std::collections::HashMap;
+    use std::rc::Rc;
 
     fn eval_compare(input: &str, object: Object) {
         let lexer = Lexer::new(input);
@@ -416,6 +432,24 @@ mod tests {
         eval_compare("let a = 32; a", Object::Integer(32));
         eval_compare("let a = 2 * 8; a", Object::Integer(16));
         eval_compare("let a = 8; let b = a * 2; b", Object::Integer(16));
+    }
+
+    #[test]
+    fn test_import_statement() -> Result<(), EvalError> {
+        // Evaluate test case program
+        let input = "import test_mod; test_mod";
+        let lexer = Lexer::new(input);
+        let mut parser = Parser::new(lexer);
+        let program = parser.parse_program().unwrap();
+        let mut evaluator = Evaluator::new();
+        let eval = evaluator.eval_program(&program)?;
+
+        // Create expected object
+        evaluator.env = Rc::new(RefCell::new(Environment::new()));
+        let module = Module::from_source(&mut evaluator, "test_mod")?;
+
+        assert_eq!(eval, Object::Module(module));
+        Ok(())
     }
 
     #[test]

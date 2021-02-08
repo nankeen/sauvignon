@@ -1,4 +1,4 @@
-use super::{BuiltinFunction, Object};
+use super::{BuiltinFunction, EvalError, Object};
 
 /// Returns an array of `(String, Object)` pairs indication function name and function object
 pub fn get_builtins() -> Vec<(String, Object)> {
@@ -12,18 +12,18 @@ fn new_builtin(name: &str, func: BuiltinFunction) -> (String, Object) {
 
 /// Module containing built in functions
 mod funcs {
-    use super::Object;
+    use super::{EvalError, Object};
 
-    pub fn len(args: Vec<Object>) -> Result<Object, String> {
+    pub fn len(args: Vec<Object>) -> Result<Object, EvalError> {
         if args.len() != 1 {
-            return Err(format!(
-                "expected 1 argument for len(), got {:?} instead",
-                args.len()
-            ));
+            return Err(EvalError::BadArgumentLength(1, args.len()));
         }
         match &args[0] {
             Object::String(s) => Ok(Object::Integer(s.len() as i64)),
-            _ => Err(format!("length of type {:?} can't be determined", args[0])),
+            _ => Err(EvalError::RuntimeError(format!(
+                "length of type {:?} cannot be determined",
+                args[0]
+            ))),
         }
     }
 }

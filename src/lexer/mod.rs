@@ -88,6 +88,7 @@ impl<'a> Lexer<'a> {
             "if" => Token::If,
             "else" => Token::Else,
             "return" => Token::Return,
+            "import" => Token::Import,
             // If it doesn't match, it's an identifier
             s => Token::Ident(s.to_string()),
         }
@@ -178,6 +179,7 @@ mod tests {
         \"cheesecake\"
         [32, 64];
         {\"cheese\": \"cake\"}
+        import test_m
         ";
 
         let tests = [
@@ -266,6 +268,8 @@ mod tests {
             Token::Colon,
             Token::StringLiteral("cake".to_string()),
             Token::RBrace,
+            Token::Import,
+            Token::Ident("test_m".to_string()),
             Token::EOF,
         ];
 
