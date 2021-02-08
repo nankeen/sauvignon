@@ -371,8 +371,6 @@ mod tests {
         eval_compare("!false", Object::Boolean(true));
         eval_compare("!!true", Object::Boolean(true));
         eval_compare("!!false", Object::Boolean(false));
-        eval_compare("!5", Object::Boolean(false));
-        eval_compare("!!5", Object::Boolean(true));
 
         eval_compare("-32", Object::Integer(-32));
         eval_compare("-1024", Object::Integer(-1024));
