@@ -1,3 +1,6 @@
+#![allow(clippy::enum_variant_names)]
+#![allow(clippy::upper_case_acronyms)]
+
 mod evaluator;
 mod lexer;
 mod parser;

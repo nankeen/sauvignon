@@ -116,7 +116,7 @@ impl Evaluator {
             Expression::Call {
                 function,
                 arguments,
-            } => self.eval_call(function, &arguments),
+            } => self.eval_call(function, arguments),
             Expression::Ident(id) => self.eval_identifier(id),
             Expression::IndexExpression { left, index } => self.eval_index_expr(left, index),
             Expression::HashLiteral(pairs) => self.eval_hash_expr(pairs),
