@@ -321,7 +321,7 @@ mod tests {
         let lexer = Lexer::new(input);
         let mut parser = Parser::new(lexer);
 
-        let mut statements = parser.parse_program()?.into_iter();
+        let mut statements = parser.parse_program()?.0.into_iter();
 
         let tests = [
             Statement::LetStatement {
@@ -384,7 +384,7 @@ mod tests {
         let lexer = Lexer::new(input);
         let mut parser = Parser::new(lexer);
 
-        let mut statements = parser.parse_program()?.into_iter();
+        let mut statements = parser.parse_program()?.0.into_iter();
 
         // Update test cases with proper expressions
         let tests = [
@@ -411,7 +411,7 @@ mod tests {
         let lexer = Lexer::new(input);
         let mut parser = Parser::new(lexer);
 
-        let mut statements = parser.parse_program()?.into_iter();
+        let mut statements = parser.parse_program()?.0.into_iter();
 
         let tests = [Statement::ExpressionStatement(Expression::Ident(
             "foobar".to_string(),
@@ -432,7 +432,7 @@ mod tests {
         let lexer = Lexer::new(input);
         let mut parser = Parser::new(lexer);
 
-        let mut statements = parser.parse_program()?.into_iter();
+        let mut statements = parser.parse_program()?.0.into_iter();
 
         let tests = [
             Statement::ExpressionStatement(Expression::BoolLiteral(true)),
@@ -454,7 +454,7 @@ mod tests {
         let lexer = Lexer::new(input);
         let mut parser = Parser::new(lexer);
 
-        let mut statements = parser.parse_program()?.into_iter();
+        let mut statements = parser.parse_program()?.0.into_iter();
 
         let tests = [
             Statement::ExpressionStatement(Expression::IntLiteral(5)),
@@ -476,7 +476,7 @@ mod tests {
         let lexer = Lexer::new(input);
         let mut parser = Parser::new(lexer);
 
-        let mut statements = parser.parse_program()?.into_iter();
+        let mut statements = parser.parse_program()?.0.into_iter();
 
         let tests = [Statement::ExpressionStatement(Expression::StringLiteral(
             "cheesecake".to_string(),
@@ -497,7 +497,7 @@ mod tests {
         let lexer = Lexer::new(input);
         let mut parser = Parser::new(lexer);
 
-        let mut statements = parser.parse_program()?.into_iter();
+        let mut statements = parser.parse_program()?.0.into_iter();
 
         let tests = [Statement::ExpressionStatement(Expression::ArrayLiteral(
             vec![
@@ -521,7 +521,7 @@ mod tests {
         let lexer = Lexer::new(input);
         let mut parser = Parser::new(lexer);
 
-        let mut statements = parser.parse_program()?.into_iter();
+        let mut statements = parser.parse_program()?.0.into_iter();
 
         let tests = [
             Statement::ExpressionStatement(Expression::PrefixExpression {
@@ -552,7 +552,7 @@ mod tests {
         let lexer = Lexer::new(input);
         let mut parser = Parser::new(lexer);
 
-        let mut statements = parser.parse_program()?.into_iter();
+        let mut statements = parser.parse_program()?.0.into_iter();
 
         let tests = [
             Statement::ExpressionStatement(Expression::InfixExpression {
@@ -613,7 +613,7 @@ mod tests {
         let lexer = Lexer::new(input);
         let mut parser = Parser::new(lexer);
 
-        let mut statements = parser.parse_program()?.into_iter();
+        let mut statements = parser.parse_program()?.0.into_iter();
 
         let tests = [
             Statement::ExpressionStatement(Expression::InfixExpression {
@@ -655,7 +655,7 @@ mod tests {
         let lexer = Lexer::new(input);
         let mut parser = Parser::new(lexer);
 
-        let mut statements = parser.parse_program()?.into_iter();
+        let mut statements = parser.parse_program()?.0.into_iter();
 
         let tests = [Statement::ExpressionStatement(Expression::IfExpression {
             condition: Box::new(Expression::InfixExpression {
@@ -684,7 +684,7 @@ mod tests {
         let lexer = Lexer::new(input);
         let mut parser = Parser::new(lexer);
 
-        let mut statements = parser.parse_program()?.into_iter();
+        let mut statements = parser.parse_program()?.0.into_iter();
 
         let tests = [Statement::ExpressionStatement(Expression::IfExpression {
             condition: Box::new(Expression::InfixExpression {
@@ -715,7 +715,7 @@ mod tests {
         let lexer = Lexer::new(input);
         let mut parser = Parser::new(lexer);
 
-        let mut statements = parser.parse_program()?.into_iter();
+        let mut statements = parser.parse_program()?.0.into_iter();
 
         let tests = [Statement::ExpressionStatement(
             Expression::FunctionLiteral {
@@ -745,7 +745,7 @@ mod tests {
         let lexer = Lexer::new(input);
         let mut parser = Parser::new(lexer);
 
-        let mut statements = parser.parse_program()?.into_iter();
+        let mut statements = parser.parse_program()?.0.into_iter();
 
         let tests = [Statement::ExpressionStatement(Expression::Call {
             function: Box::new(Expression::Ident("add".to_string())),
@@ -779,7 +779,7 @@ mod tests {
         let lexer = Lexer::new(input);
         let mut parser = Parser::new(lexer);
 
-        let mut statements = parser.parse_program()?.into_iter();
+        let mut statements = parser.parse_program()?.0.into_iter();
 
         let tests = [
             Statement::ExpressionStatement(Expression::IndexExpression {
