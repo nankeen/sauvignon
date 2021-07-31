@@ -110,3 +110,4 @@ String concatenation works using the `+` infix operator.
 - [x] Built-in functions
 - [x] Arrays
 - [x] Hash maps
+- [ ] Module import
