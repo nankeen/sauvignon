@@ -318,8 +318,7 @@ mod tests {
         let lexer = Lexer::new(input);
         let mut parser = Parser::new(lexer);
 
-        let program = parser.parse_program()?;
-        let mut statements = program.iter();
+        let mut statements = parser.parse_program()?.into_iter();
 
         let tests = [
             Statement::LetStatement {
@@ -343,9 +342,9 @@ mod tests {
             },
         ];
 
-        for test in &tests {
+        for test in tests {
             match statements.next() {
-                Some(tok) => assert_eq!(*test, *tok),
+                Some(tok) => assert_eq!(test, tok),
                 None => panic!("unexpected parser error: returned None"),
             };
         }
@@ -360,8 +359,7 @@ mod tests {
         let lexer = Lexer::new(input);
         let mut parser = Parser::new(lexer);
 
-        let program = parser.parse_program()?;
-        let mut statements = program.iter();
+        let mut statements = parser.parse_program()?.into_iter();
 
         // Update test cases with proper expressions
         let tests = [
@@ -373,9 +371,9 @@ mod tests {
             Statement::ReturnStatement(Expression::IntLiteral(993322)),
         ];
 
-        for test in &tests {
+        for test in tests {
             match statements.next() {
-                Some(tok) => assert_eq!(*test, *tok),
+                Some(tok) => assert_eq!(test, tok),
                 None => panic!("unexpected parser error: returned None"),
             };
         }
@@ -388,18 +386,17 @@ mod tests {
         let lexer = Lexer::new(input);
         let mut parser = Parser::new(lexer);
 
-        let program = parser.parse_program()?;
-        let mut statements = program.iter();
+        let mut statements = parser.parse_program()?.into_iter();
 
         let tests = [Statement::ExpressionStatement(Expression::Ident(
             "foobar".to_string(),
         ))];
 
-        for test in &tests {
+        for test in tests {
             match statements.next() {
-                Some(tok) => assert_eq!(*test, *tok),
+                Some(tok) => assert_eq!(test, tok),
                 None => panic!("unexpected parser error: returned None"),
-            };
+            }
         }
         Ok(())
     }
@@ -410,17 +407,16 @@ mod tests {
         let lexer = Lexer::new(input);
         let mut parser = Parser::new(lexer);
 
-        let program = parser.parse_program()?;
-        let mut statements = program.iter();
+        let mut statements = parser.parse_program()?.into_iter();
 
         let tests = [
             Statement::ExpressionStatement(Expression::BoolLiteral(true)),
             Statement::ExpressionStatement(Expression::BoolLiteral(false)),
         ];
 
-        for test in &tests {
+        for test in tests {
             match statements.next() {
-                Some(tok) => assert_eq!(*test, *tok),
+                Some(tok) => assert_eq!(test, tok),
                 None => panic!("unexpected parser error: returned None"),
             };
         }
@@ -433,17 +429,16 @@ mod tests {
         let lexer = Lexer::new(input);
         let mut parser = Parser::new(lexer);
 
-        let program = parser.parse_program()?;
-        let mut statements = program.iter();
+        let mut statements = parser.parse_program()?.into_iter();
 
         let tests = [
             Statement::ExpressionStatement(Expression::IntLiteral(5)),
             Statement::ExpressionStatement(Expression::IntLiteral(1024)),
         ];
 
-        for test in &tests {
+        for test in tests {
             match statements.next() {
-                Some(tok) => assert_eq!(*test, *tok),
+                Some(tok) => assert_eq!(test, tok),
                 None => panic!("unexpected parser error: returned None"),
             };
         }
@@ -456,16 +451,15 @@ mod tests {
         let lexer = Lexer::new(input);
         let mut parser = Parser::new(lexer);
 
-        let program = parser.parse_program()?;
-        let mut statements = program.iter();
+        let mut statements = parser.parse_program()?.into_iter();
 
         let tests = [Statement::ExpressionStatement(Expression::StringLiteral(
             "cheesecake".to_string(),
         ))];
 
-        for test in &tests {
+        for test in tests {
             match statements.next() {
-                Some(tok) => assert_eq!(*test, *tok),
+                Some(tok) => assert_eq!(test, tok),
                 None => panic!("unexpected parser error: returned None"),
             };
         }
@@ -478,8 +472,7 @@ mod tests {
         let lexer = Lexer::new(input);
         let mut parser = Parser::new(lexer);
 
-        let program = parser.parse_program()?;
-        let mut statements = program.iter();
+        let mut statements = parser.parse_program()?.into_iter();
 
         let tests = [Statement::ExpressionStatement(Expression::ArrayLiteral(
             vec![
@@ -488,9 +481,9 @@ mod tests {
             ],
         ))];
 
-        for test in &tests {
+        for test in tests {
             match statements.next() {
-                Some(tok) => assert_eq!(*test, *tok),
+                Some(tok) => assert_eq!(test, tok),
                 None => panic!("unexpected parser error: returned None"),
             };
         }
@@ -503,8 +496,7 @@ mod tests {
         let lexer = Lexer::new(input);
         let mut parser = Parser::new(lexer);
 
-        let program = parser.parse_program()?;
-        let mut statements = program.iter();
+        let mut statements = parser.parse_program()?.into_iter();
 
         let tests = [
             Statement::ExpressionStatement(Expression::PrefixExpression {
@@ -517,9 +509,9 @@ mod tests {
             }),
         ];
 
-        for test in &tests {
+        for test in tests {
             match statements.next() {
-                Some(tok) => assert_eq!(*test, *tok),
+                Some(tok) => assert_eq!(test, tok),
                 None => panic!("unexpected parser error: returned None"),
             };
         }
@@ -535,8 +527,7 @@ mod tests {
         let lexer = Lexer::new(input);
         let mut parser = Parser::new(lexer);
 
-        let program = parser.parse_program()?;
-        let mut statements = program.iter();
+        let mut statements = parser.parse_program()?.into_iter();
 
         let tests = [
             Statement::ExpressionStatement(Expression::InfixExpression {
@@ -581,9 +572,9 @@ mod tests {
             }),
         ];
 
-        for test in &tests {
+        for test in tests {
             match statements.next() {
-                Some(tok) => assert_eq!(*test, *tok),
+                Some(tok) => assert_eq!(test, tok),
                 None => panic!("unexpected parser error: returned None"),
             };
         }
@@ -597,8 +588,7 @@ mod tests {
         let lexer = Lexer::new(input);
         let mut parser = Parser::new(lexer);
 
-        let program = parser.parse_program()?;
-        let mut statements = program.iter();
+        let mut statements = parser.parse_program()?.into_iter();
 
         let tests = [
             Statement::ExpressionStatement(Expression::InfixExpression {
@@ -625,9 +615,9 @@ mod tests {
             }),
         ];
 
-        for test in &tests {
+        for test in tests {
             match statements.next() {
-                Some(tok) => assert_eq!(*test, *tok),
+                Some(tok) => assert_eq!(test, tok),
                 None => panic!("unexpected parser error: returned None"),
             };
         }
@@ -640,8 +630,7 @@ mod tests {
         let lexer = Lexer::new(input);
         let mut parser = Parser::new(lexer);
 
-        let program = parser.parse_program()?;
-        let mut statements = program.iter();
+        let mut statements = parser.parse_program()?.into_iter();
 
         let tests = [Statement::ExpressionStatement(Expression::IfExpression {
             condition: Box::new(Expression::InfixExpression {
@@ -655,9 +644,9 @@ mod tests {
             alternative: vec![],
         })];
 
-        for test in &tests {
+        for test in tests {
             match statements.next() {
-                Some(tok) => assert_eq!(*test, *tok),
+                Some(tok) => assert_eq!(test, tok),
                 None => panic!("unexpected parser error: returned None"),
             };
         }
@@ -670,8 +659,7 @@ mod tests {
         let lexer = Lexer::new(input);
         let mut parser = Parser::new(lexer);
 
-        let program = parser.parse_program()?;
-        let mut statements = program.iter();
+        let mut statements = parser.parse_program()?.into_iter();
 
         let tests = [Statement::ExpressionStatement(Expression::IfExpression {
             condition: Box::new(Expression::InfixExpression {
@@ -687,9 +675,9 @@ mod tests {
             ))],
         })];
 
-        for test in &tests {
+        for test in tests {
             match statements.next() {
-                Some(tok) => assert_eq!(*test, *tok),
+                Some(tok) => assert_eq!(test, tok),
                 None => panic!("unexpected parser error: returned None"),
             };
         }
@@ -702,8 +690,7 @@ mod tests {
         let lexer = Lexer::new(input);
         let mut parser = Parser::new(lexer);
 
-        let program = parser.parse_program()?;
-        let mut statements = program.iter();
+        let mut statements = parser.parse_program()?.into_iter();
 
         let tests = [Statement::ExpressionStatement(
             Expression::FunctionLiteral {
@@ -718,9 +705,9 @@ mod tests {
             },
         )];
 
-        for test in &tests {
+        for test in tests {
             match statements.next() {
-                Some(tok) => assert_eq!(*test, *tok),
+                Some(tok) => assert_eq!(test, tok),
                 None => panic!("unexpected parser error: returned None"),
             };
         }
@@ -733,8 +720,7 @@ mod tests {
         let lexer = Lexer::new(input);
         let mut parser = Parser::new(lexer);
 
-        let program = parser.parse_program()?;
-        let mut statements = program.iter();
+        let mut statements = parser.parse_program()?.into_iter();
 
         let tests = [Statement::ExpressionStatement(Expression::Call {
             function: Box::new(Expression::Ident("add".to_string())),
@@ -753,9 +739,9 @@ mod tests {
             ],
         })];
 
-        for test in &tests {
+        for test in tests {
             match statements.next() {
-                Some(tok) => assert_eq!(*test, *tok),
+                Some(tok) => assert_eq!(test, tok),
                 None => panic!("unexpected parser error: returned None"),
             };
         }
@@ -768,8 +754,7 @@ mod tests {
         let lexer = Lexer::new(input);
         let mut parser = Parser::new(lexer);
 
-        let program = parser.parse_program()?;
-        let mut statements = program.iter();
+        let mut statements = parser.parse_program()?.into_iter();
 
         let tests = [
             Statement::ExpressionStatement(Expression::IndexExpression {
@@ -783,9 +768,9 @@ mod tests {
             Statement::ExpressionStatement(Expression::IntLiteral(6)),
         ];
 
-        for test in &tests {
+        for test in tests {
             match statements.next() {
-                Some(tok) => assert_eq!(*test, *tok),
+                Some(tok) => assert_eq!(test, tok),
                 None => panic!("unexpected parser error: returned None"),
             };
         }
@@ -798,8 +783,7 @@ mod tests {
         let lexer = Lexer::new(input);
         let mut parser = Parser::new(lexer);
 
-        let program = parser.parse_program()?;
-        let mut statements = program.iter();
+        let mut statements = parser.parse_program()?.into_iter();
 
         let tests = [
             Statement::ExpressionStatement(Expression::HashLiteral(vec![
@@ -815,9 +799,9 @@ mod tests {
             Statement::ExpressionStatement(Expression::HashLiteral(vec![])),
         ];
 
-        for test in &tests {
+        for test in tests {
             match statements.next() {
-                Some(tok) => assert_eq!(*test, *tok),
+                Some(tok) => assert_eq!(test, tok),
                 None => panic!("unexpected parser error: returned None"),
             };
         }

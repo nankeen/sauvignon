@@ -270,9 +270,9 @@ mod tests {
         ];
 
         let mut lexer = Lexer::new(input);
-        for test in tests.iter() {
+        for test in tests {
             match lexer.next() {
-                Some(tok) => assert_eq!(*test, tok),
+                Some(tok) => assert_eq!(test, tok),
                 None => panic!("unexpected lexer error: returned None"),
             };
         }
